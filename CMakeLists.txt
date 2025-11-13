@@ -9,13 +9,15 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets SerialBus)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets SerialBus)
 
 set(PROJECT_SOURCES
         main.cpp
         dockmanager.cpp
         dockmanager.h
+        modbus/modbusclient.cpp
+        modbus/modbusclient.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -41,7 +43,7 @@ else()
     endif()
 endif()
 
-target_link_libraries(laser-backlight-tester PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(laser-backlight-tester PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::SerialBus)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an

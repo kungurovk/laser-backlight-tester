@@ -48,8 +48,10 @@ void ModbusClient::setConnectionParameters(const QString &host, quint16 port, in
     m_client->setTimeout(m_timeoutMs);
 }
 
-bool ModbusClient::connectDevice()
+bool ModbusClient::connectDevice(const QString &host, quint16 port)
 {
+    setConnectionParameters(host, port);
+
     if (!m_client) {
         handleError(tr("Unable to connect: Modbus client is unavailable."));
         return false;

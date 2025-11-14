@@ -15,8 +15,8 @@
 #include <QVariant>
 #include <QtMath>
 
-static QString settingsOrg() { return QStringLiteral("DockManagerDemo"); }
-static QString settingsApp() { return QStringLiteral("DockManager"); }
+static QString settingsOrg() { return QStringLiteral("Lassard"); }
+static QString settingsApp() { return QStringLiteral("Laser Backlight Tester"); }
 
 DockManager::DockManager(QWidget *parent)
     : QMainWindow{parent}

@@ -23,14 +23,15 @@ public:
 
     void setConnectionParameters(const QString &host, quint16 port, int timeoutMs = 1000);
 
-    bool connectDevice();
-    void disconnectDevice();
-
     bool isConnected() const;
 
     void readHoldingRegisters(int startAddress, quint16 numberOfEntries, int serverAddress = 1);
     void writeSingleRegister(int address, quint16 value, int serverAddress = 1);
     void writeMultipleRegisters(int startAddress, const QVector<quint16> &values, int serverAddress = 1);
+
+public slots:
+    bool connectDevice(const QString &host, quint16 port);
+    void disconnectDevice();
 
 signals:
     void connectionStateChanged(bool connected);

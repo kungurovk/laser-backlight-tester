@@ -1,4 +1,5 @@
 #include "dockmanager.h"
+#include "modecontrolform.h"
 
 #include <QDockWidget>
 #include <QMenuBar>
@@ -145,9 +146,8 @@ void DockManager::addListWidget()
 
 void DockManager::addCustomWidget()
 {
-    auto *label = new QLabel(tr("Произвольный QWidget"), this);
-    label->setAlignment(Qt::AlignCenter);
-    createDockFor(label, tr("Виджет"));
+    auto *modeControlForm = new ModeControlForm;
+    createDockFor(modeControlForm, "Управление режимами");
 }
 
 void DockManager::toggleDockTitles(bool show)
@@ -216,7 +216,7 @@ QString DockManager::detectDockType(QWidget *content) const
 {
     if (qobject_cast<QTextEdit*>(content)) return QStringLiteral("text");
     if (qobject_cast<QListWidget*>(content)) return QStringLiteral("list");
-    if (qobject_cast<QLabel*>(content)) return QStringLiteral("label");
+    if (qobject_cast<ModeControlForm*>(content)) return QStringLiteral("modeControlForm");
     return QStringLiteral("unknown");
 }
 
@@ -235,10 +235,9 @@ QWidget* DockManager::createWidgetFromType(const QString &typeName, const QVaria
             for (int i = 1; i <= 10; ++i) w->addItem(tr("Восстановленный %1").arg(i));
         }
         return w;
-    } else if (typeName == QLatin1String("label")) {
-        auto *w = new QLabel(payload.toString().isEmpty() ? tr("Восстановленный виджет") : payload.toString(), this);
-        w->setAlignment(Qt::AlignCenter);
-        return w;
+    } else if (typeName == QLatin1String("modeControlForm")) {
+        auto *modeControlForm = new ModeControlForm;
+        return modeControlForm;
     }
     auto *fallback = new QLabel(tr("Неизвестный тип: %1").arg(typeName), this);
     fallback->setAlignment(Qt::AlignCenter);

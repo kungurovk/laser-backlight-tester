@@ -19,6 +19,7 @@ Controller::Controller(QObject *parent)
     //     if (connected) sendOnConnection();
     //     else doOnDisconnected();
     });
+    connect(this, &Controller::sendMessage, m_modebusClient, &ModbusClient::writeSingleRegister);
 }
 
 Controller::~Controller()
@@ -27,4 +28,14 @@ Controller::~Controller()
         m_modebusClientThread->quit();
         m_modebusClientThread->wait();
     }
+}
+
+void Controller::sendMessageAutoMode()
+{
+    emit sendMessage(0x00, 0x0000);
+}
+
+void Controller::sendMessageManualMode()
+{
+    emit sendMessage(0x00, 0x0100);
 }

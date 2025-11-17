@@ -146,7 +146,9 @@ void DockManager::addListWidget()
 
 void DockManager::addCustomWidget()
 {
-    auto *modeControlForm = new ModeControlForm;
+    auto *modeControlForm = new ModeControlForm(this);
+    connect(modeControlForm, &ModeControlForm::setAutoMode, this, &DockManager::setAutoMode);
+    connect(modeControlForm, &ModeControlForm::setManualMode, this, &DockManager::setManualMode);
     createDockFor(modeControlForm, "Управление режимами");
 }
 
@@ -237,6 +239,8 @@ QWidget* DockManager::createWidgetFromType(const QString &typeName, const QVaria
         return w;
     } else if (typeName == QLatin1String("modeControlForm")) {
         auto *modeControlForm = new ModeControlForm;
+        connect(modeControlForm, &ModeControlForm::setAutoMode, this, &DockManager::setAutoMode);
+        connect(modeControlForm, &ModeControlForm::setManualMode, this, &DockManager::setManualMode);
         return modeControlForm;
     }
     auto *fallback = new QLabel(tr("Неизвестный тип: %1").arg(typeName), this);

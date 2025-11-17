@@ -13,7 +13,14 @@ public:
     explicit Controller(QObject *parent = nullptr);
     ~Controller();
 
+public slots:
+    void sendMessageAutoMode();
+    void sendMessageManualMode();
+
 signals:
+    void sendMessage(int address, quint16 value, int serverAddress = 1);
+    void sendMessages(int startAddress, const QVector<quint16> &values, int serverAddress = 1);
+
     void connectToTcpPort(const QString &host, quint16 port);
     void disconnectFromTcp();
 

@@ -26,12 +26,13 @@ public:
     bool isConnected() const;
 
     void readHoldingRegisters(int startAddress, quint16 numberOfEntries, int serverAddress = 1);
-    void writeSingleRegister(int address, quint16 value, int serverAddress = 1);
-    void writeMultipleRegisters(int startAddress, const QVector<quint16> &values, int serverAddress = 1);
 
 public slots:
     bool connectDevice(const QString &host, quint16 port);
     void disconnectDevice();
+
+    void writeSingleRegister(int address, quint16 value, int serverAddress = 1);
+    void writeMultipleRegisters(int startAddress, const QVector<quint16> &values, int serverAddress = 1);
 
 signals:
     void connectionStateChanged(bool connected);

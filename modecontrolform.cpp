@@ -6,6 +6,9 @@ ModeControlForm::ModeControlForm(QWidget *parent)
     , ui(new Ui::ModeControlForm)
 {
     ui->setupUi(this);
+
+    connect(ui->pushButtonAutoMode, &QPushButton::clicked, this, &ModeControlForm::setAutoMode);
+    connect(ui->pushButtonManualMode, &QPushButton::clicked, this, &ModeControlForm::setManualMode);
 }
 
 ModeControlForm::~ModeControlForm()

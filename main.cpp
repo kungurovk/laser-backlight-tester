@@ -10,6 +10,8 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName("Laser Backlight Tester");
     DockManager w;
     Controller c;
+    QObject::connect(&w, &DockManager::setAutoMode, &c, &Controller::sendMessageAutoMode);
+    QObject::connect(&w, &DockManager::setManualMode, &c, &Controller::sendMessageManualMode);
     w.show();
     return a.exec();
 }

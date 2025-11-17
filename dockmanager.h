@@ -15,6 +15,10 @@ class DockManager : public QMainWindow
     Q_OBJECT
 public:
     explicit DockManager(QWidget *parent = nullptr);
+
+signals:
+    void setAutoMode();
+    void setManualMode();
 protected:
     void closeEvent(QCloseEvent *event) override;
 private slots:

@@ -7,7 +7,7 @@ enum Mode : unsigned short
     Manual  = 0x01,
     Duty    = 0x02,
     Prepare = 0x03,
-    Work    = 0x04
+    Work    = 0x04,
 };
 
 enum ModeAddress

@@ -29,6 +29,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         modbusclient.h
         controller.h controller.cpp
         modecontrolform.h modecontrolform.cpp modecontrolform.ui
+        enums.h
+        endianutils.h
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET laser-backlight-tester APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

@@ -1,4 +1,8 @@
 #include "controller.h"
+#include "enums.h"
+#include "endianutils.h"
+
+#include <QDebug>
 
 Controller::Controller(QObject *parent)
     : QObject{parent}
@@ -20,6 +24,8 @@ Controller::Controller(QObject *parent)
     //     else doOnDisconnected();
     });
     connect(this, &Controller::sendMessage, m_modebusClient, &ModbusClient::writeSingleRegister);
+
+    qDebug() << toLittleEndian(Mode::Work);
 }
 
 Controller::~Controller()
@@ -32,10 +38,10 @@ Controller::~Controller()
 
 void Controller::sendMessageAutoMode()
 {
-    emit sendMessage(0x00, 0x0000);
+    emit sendMessage(ModeAddress::Address, toLittleEndian(Mode::Auto));
 }
 
 void Controller::sendMessageManualMode()
 {
-    emit sendMessage(0x00, 0x0100);
+    emit sendMessage(ModeAddress::Address, toLittleEndian(Mode::Manual));
 }

@@ -46,3 +46,18 @@ void Controller::sendMessageManualMode()
 {
     emit sendMessage(ModeAddress::Address, toLittleEndian(Mode::Manual));
 }
+
+void Controller::sendMessageDutyMode()
+{
+    emit sendMessage(ModeAddress::Address, toLittleEndian(Mode::Duty));
+}
+
+void Controller::sendMessagePrepareMode()
+{
+    emit sendMessage(ModeAddress::Address, toLittleEndian(Mode::Prepare));
+}
+
+void Controller::sendMessageWorkMode()
+{
+    emit sendMessage(ModeAddress::Address, toLittleEndian(Mode::Work));
+}

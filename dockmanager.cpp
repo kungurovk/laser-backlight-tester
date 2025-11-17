@@ -149,6 +149,9 @@ void DockManager::addCustomWidget()
     auto *modeControlForm = new ModeControlForm(this);
     connect(modeControlForm, &ModeControlForm::setAutoMode, this, &DockManager::setAutoMode);
     connect(modeControlForm, &ModeControlForm::setManualMode, this, &DockManager::setManualMode);
+    connect(modeControlForm, &ModeControlForm::setDutyMode, this, &DockManager::setDutyMode);
+    connect(modeControlForm, &ModeControlForm::setPrepareMode, this, &DockManager::setPrepareMode);
+    connect(modeControlForm, &ModeControlForm::setWorkMode, this, &DockManager::setWorkMode);
     createDockFor(modeControlForm, "Управление режимами");
 }
 
@@ -241,6 +244,9 @@ QWidget* DockManager::createWidgetFromType(const QString &typeName, const QVaria
         auto *modeControlForm = new ModeControlForm;
         connect(modeControlForm, &ModeControlForm::setAutoMode, this, &DockManager::setAutoMode);
         connect(modeControlForm, &ModeControlForm::setManualMode, this, &DockManager::setManualMode);
+        connect(modeControlForm, &ModeControlForm::setDutyMode, this, &DockManager::setDutyMode);
+        connect(modeControlForm, &ModeControlForm::setPrepareMode, this, &DockManager::setPrepareMode);
+        connect(modeControlForm, &ModeControlForm::setWorkMode, this, &DockManager::setWorkMode);
         return modeControlForm;
     }
     auto *fallback = new QLabel(tr("Неизвестный тип: %1").arg(typeName), this);

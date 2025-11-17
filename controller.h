@@ -16,6 +16,9 @@ public:
 public slots:
     void sendMessageAutoMode();
     void sendMessageManualMode();
+    void sendMessageDutyMode();
+    void sendMessagePrepareMode();
+    void sendMessageWorkMode();
 
 signals:
     void sendMessage(int address, quint16 value, int serverAddress = 1);

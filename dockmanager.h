@@ -19,6 +19,10 @@ public:
 signals:
     void setAutoMode();
     void setManualMode();
+    void setDutyMode();
+    void setPrepareMode();
+    void setWorkMode();
+
 protected:
     void closeEvent(QCloseEvent *event) override;
 private slots:

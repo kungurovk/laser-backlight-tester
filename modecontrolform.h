@@ -3,6 +3,8 @@
 
 #include <QWidget>
 
+#include "enums.h"
+
 namespace Ui {
 class ModeControlForm;
 }
@@ -16,11 +18,7 @@ public:
     ~ModeControlForm();
 
 signals:
-    void setManualMode();
-    void setAutoMode();
-    void setDutyMode();
-    void setPrepareMode();
-    void setWorkMode();
+    void modeRequested(Mode mode);
 
 private:
     Ui::ModeControlForm *ui;

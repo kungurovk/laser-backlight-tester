@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QThread>
 
+#include "enums.h"
 #include "modbusclient.h"
 
 class Controller : public QObject
@@ -14,11 +15,7 @@ public:
     ~Controller();
 
 public slots:
-    void sendMessageAutoMode();
-    void sendMessageManualMode();
-    void sendMessageDutyMode();
-    void sendMessagePrepareMode();
-    void sendMessageWorkMode();
+    void sendMessageForMode(Mode mode);
 
 signals:
     void sendMessage(int address, quint16 value, int serverAddress = 1);

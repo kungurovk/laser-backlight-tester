@@ -2,6 +2,8 @@
 #define DOCKMANAGER_H
 
 #include <QMainWindow>
+
+#include "enums.h"
 class QMenu;
 class QToolBar;
 class QDockWidget;
@@ -17,11 +19,7 @@ public:
     explicit DockManager(QWidget *parent = nullptr);
 
 signals:
-    void setAutoMode();
-    void setManualMode();
-    void setDutyMode();
-    void setPrepareMode();
-    void setWorkMode();
+    void modeRequested(Mode mode);
 
 protected:
     void closeEvent(QCloseEvent *event) override;

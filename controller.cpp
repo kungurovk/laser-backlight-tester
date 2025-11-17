@@ -37,27 +37,7 @@ Controller::~Controller()
     }
 }
 
-void Controller::sendMessageAutoMode()
+void Controller::sendMessageForMode(Mode mode)
 {
-    emit sendMessage(ModeAddress::Address, toLittleEndian(Mode::Auto));
-}
-
-void Controller::sendMessageManualMode()
-{
-    emit sendMessage(ModeAddress::Address, toLittleEndian(Mode::Manual));
-}
-
-void Controller::sendMessageDutyMode()
-{
-    emit sendMessage(ModeAddress::Address, toLittleEndian(Mode::Duty));
-}
-
-void Controller::sendMessagePrepareMode()
-{
-    emit sendMessage(ModeAddress::Address, toLittleEndian(Mode::Prepare));
-}
-
-void Controller::sendMessageWorkMode()
-{
-    emit sendMessage(ModeAddress::Address, toLittleEndian(Mode::Work));
+    emit sendMessage(ModeAddress::Address, toLittleEndian(mode));
 }

@@ -26,7 +26,7 @@ Controller::Controller(QObject *parent)
     connect(this, &Controller::sendMessage, m_modebusClient, &ModbusClient::writeSingleRegister);
 
     // qDebug() << toLittleEndian(Mode::Work);
-    // qDebug() << toBigEndian(1024);
+    // qDebug() << toBigEndian((short)0x0400);
 }
 
 Controller::~Controller()

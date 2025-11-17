@@ -34,8 +34,20 @@ constexpr Unsigned byteSwap(Unsigned value)
 template <typename T>
 using Decayed = std::decay_t<T>;
 
+template <typename T, bool = std::is_enum_v<T>>
+struct RawIntegralImpl
+{
+    using type = T;
+};
+
 template <typename T>
-using RawIntegral = std::conditional_t<std::is_enum_v<Decayed<T>>, std::underlying_type_t<Decayed<T>>, Decayed<T>>;
+struct RawIntegralImpl<T, true>
+{
+    using type = std::underlying_type_t<T>;
+};
+
+template <typename T>
+using RawIntegral = typename RawIntegralImpl<T>::type;
 
 template <typename T>
 using UnsignedRaw = std::make_unsigned_t<RawIntegral<T>>;
@@ -48,8 +60,8 @@ constexpr T toLittleEndian(T value)
     static_assert(std::is_integral_v<DecayedT> || std::is_enum_v<DecayedT>,
                   "toLittleEndian expects an integral or enum type");
 
-    using Unsigned = detail::UnsignedRaw<T>;
-    Unsigned u = static_cast<Unsigned>(static_cast<detail::RawIntegral<T>>(value));
+    using Unsigned = detail::UnsignedRaw<DecayedT>;
+    Unsigned u = static_cast<Unsigned>(static_cast<detail::RawIntegral<DecayedT>>(value));
 
 // #if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
 //     return static_cast<T>(u);
@@ -65,8 +77,8 @@ constexpr T toBigEndian(T value)
     static_assert(std::is_integral_v<DecayedT> || std::is_enum_v<DecayedT>,
                   "toBigEndian expects an integral or enum type");
 
-    using Unsigned = detail::UnsignedRaw<T>;
-    Unsigned u = static_cast<Unsigned>(static_cast<detail::RawIntegral<T>>(value));
+    using Unsigned = detail::UnsignedRaw<DecayedT>;
+    Unsigned u = static_cast<Unsigned>(static_cast<detail::RawIntegral<DecayedT>>(value));
 
 // #if Q_BYTE_ORDER == Q_BIG_ENDIAN
 //     return static_cast<T>(u);

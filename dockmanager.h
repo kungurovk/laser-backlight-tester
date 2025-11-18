@@ -25,8 +25,8 @@ protected:
     void closeEvent(QCloseEvent *event) override;
 private slots:
     void addSampleTextWidget();
-    void addListWidget();
-    void addCustomWidget();
+    void addBlockTableWidget();
+    void addModeControlWidget();
     void toggleDockTitles(bool show);
     void saveLayout();
     void restoreLayout();

@@ -1,5 +1,6 @@
 #include "dockmanager.h"
 #include "modecontrolform.h"
+#include "blocktableform.h"
 
 #include <QDockWidget>
 #include <QMenuBar>
@@ -36,7 +37,7 @@ DockManager::DockManager(QWidget *parent)
     if (findChildren<QDockWidget*>().isEmpty()) {
         // Fallback demo content if nothing restored
         addSampleTextWidget();
-        addListWidget();
+        addBlockTableWidget();
     }
 }
 
@@ -54,11 +55,11 @@ void DockManager::createActions()
     m_actAddText = new QAction(tr("Добавить Текст"), this);
     connect(m_actAddText, &QAction::triggered, this, &DockManager::addSampleTextWidget);
 
-    m_actAddList = new QAction(tr("Добавить Список"), this);
-    connect(m_actAddList, &QAction::triggered, this, &DockManager::addListWidget);
+    m_actAddList = new QAction(tr("Статусы блоков"), this);
+    connect(m_actAddList, &QAction::triggered, this, &DockManager::addBlockTableWidget);
 
-    m_actAddCustom = new QAction(tr("Добавить Виджет"), this);
-    connect(m_actAddCustom, &QAction::triggered, this, &DockManager::addCustomWidget);
+    m_actAddCustom = new QAction(tr("Управление режимами"), this);
+    connect(m_actAddCustom, &QAction::triggered, this, &DockManager::addModeControlWidget);
 
     m_actShowTitles = new QAction(tr("Показывать заголовки"), this);
     m_actShowTitles->setCheckable(true);
@@ -137,14 +138,14 @@ void DockManager::addSampleTextWidget()
     createDockFor(text, tr("Текст"));
 }
 
-void DockManager::addListWidget()
+void DockManager::addBlockTableWidget()
 {
-    auto *list = new QListWidget(this);
-    for (int i = 1; i <= 20; ++i) list->addItem(tr("Элемент %1").arg(i));
-    createDockFor(list, tr("Список"));
+    auto *list = new BlockTableForm(this);
+    // for (int i = 1; i <= 20; ++i) list->addItem(tr("Элемент %1").arg(i));
+    createDockFor(list, tr("Статусы блоков"));
 }
 
-void DockManager::addCustomWidget()
+void DockManager::addModeControlWidget()
 {
     auto *modeControlForm = new ModeControlForm(this);
     connect(modeControlForm, &ModeControlForm::modeRequested, this, &DockManager::modeRequested);
@@ -216,7 +217,7 @@ void DockManager::loadDockContents(QSettings &settings)
 QString DockManager::detectDockType(QWidget *content) const
 {
     if (qobject_cast<QTextEdit*>(content)) return QStringLiteral("text");
-    if (qobject_cast<QListWidget*>(content)) return QStringLiteral("list");
+    if (qobject_cast<BlockTableForm*>(content)) return QStringLiteral("blockTableForm");
     if (qobject_cast<ModeControlForm*>(content)) return QStringLiteral("modeControlForm");
     return QStringLiteral("unknown");
 }
@@ -228,13 +229,13 @@ QWidget* DockManager::createWidgetFromType(const QString &typeName, const QVaria
         auto *w = new QTextEdit(this);
         w->setPlainText(payload.toString().isEmpty() ? tr("Восстановленный текстовый виджет") : payload.toString());
         return w;
-    } else if (typeName == QLatin1String("list")) {
+    } else if (typeName == QLatin1String("blockTableForm")) {
         auto *w = new QListWidget(this);
-        if (payload.canConvert<QStringList>()) {
-            w->addItems(payload.toStringList());
-        } else {
-            for (int i = 1; i <= 10; ++i) w->addItem(tr("Восстановленный %1").arg(i));
-        }
+        // if (payload.canConvert<QStringList>()) {
+        //     w->addItems(payload.toStringList());
+        // } else {
+        //     for (int i = 1; i <= 10; ++i) w->addItem(tr("Восстановленный %1").arg(i));
+        // }
         return w;
     } else if (typeName == QLatin1String("modeControlForm")) {
         auto *modeControlForm = new ModeControlForm;

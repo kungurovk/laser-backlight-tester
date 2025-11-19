@@ -27,9 +27,27 @@ BlockTableForm::BlockTableForm(QWidget *parent)
     setupTable();
     populateTable();
     connect(ui->tableWidget->horizontalHeader(), &QHeaderView::sectionResized,
-            this, [this]() {
+            this, [this](int logicalIndex, int /*oldSize*/, int /*newSize*/) {
+        Q_UNUSED(logicalIndex);
+        const int col = 3; // actions column with QPushButton
+        const int rows = ui->tableWidget->rowCount();
+        for (int r = 0; r < rows; ++r) {
+            const QModelIndex idx = ui->tableWidget->model()->index(r, col);
+            const QRect rect = ui->tableWidget->visualRect(idx);
+            if (!rect.isNull()) {
+                if (QWidget *w = ui->tableWidget->cellWidget(r, col)) {
+                    w->setGeometry(rect);
+                }
+                ui->tableWidget->viewport()->update(rect);
+            }
+        }
         ui->tableWidget->resizeRowsToContents();
-    });
+        ui->tableWidget->viewport()->update();
+    }, Qt::DirectConnection);
+    connect(ui->tableWidget->horizontalHeader(), &QHeaderView::geometriesChanged,
+            this, [this]() {
+        ui->tableWidget->viewport()->update();
+    }, Qt::DirectConnection);
 }
 
 BlockTableForm::~BlockTableForm()

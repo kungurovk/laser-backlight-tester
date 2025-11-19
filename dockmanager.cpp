@@ -67,13 +67,16 @@ void DockManager::createUi()
 void DockManager::createActions()
 {
     m_actAddText = new QAction(tr("Добавить Текст"), this);
-    connect(m_actAddText, &QAction::triggered, this, &DockManager::addSampleTextWidget);
+    m_actAddText->setCheckable(true);
+    connect(m_actAddText, &QAction::toggled, this, &DockManager::toggleText);
 
     m_actAddBlockTable = new QAction(tr("Статусы блоков"), this);
-    connect(m_actAddBlockTable, &QAction::triggered, this, &DockManager::addBlockTableWidget);
+    m_actAddBlockTable->setCheckable(true);
+    connect(m_actAddBlockTable, &QAction::toggled, this, &DockManager::toggleBlockTable);
 
     m_actAddModeControl = new QAction(tr("Управление режимами"), this);
-    connect(m_actAddModeControl, &QAction::triggered, this, &DockManager::addModeControlWidget);
+    m_actAddModeControl->setCheckable(true);
+    connect(m_actAddModeControl, &QAction::toggled, this, &DockManager::toggleModeControl);
 
     m_actShowTitles = new QAction(tr("Показывать заголовки"), this);
     m_actShowTitles->setCheckable(true);
@@ -132,6 +135,7 @@ QDockWidget* DockManager::createDockFor(QWidget *content, const QString &title)
     dock->setWidget(content);
     dock->setAllowedAreas(Qt::AllDockWidgetAreas);
     addDockWidget(Qt::RightDockWidgetArea, dock);
+    connectDockSignals(dock);
     return dock;
 }
 
@@ -142,6 +146,7 @@ QDockWidget* DockManager::createDockFor(QWidget *content, const QString &title, 
     dock->setWidget(content);
     dock->setAllowedAreas(Qt::AllDockWidgetAreas);
     addDockWidget(Qt::RightDockWidgetArea, dock);
+    connectDockSignals(dock);
     return dock;
 }
 
@@ -149,23 +154,95 @@ void DockManager::addSampleTextWidget()
 {
     auto *text = new QTextEdit(this);
     text->setPlainText(tr("Это пример текстового редактора. Перетащите в любую область или объедините во вкладки."));
-    createDockFor(text, tr("Текст"));
+    auto *dock = createDockFor(text, tr("Текст"));
+    dock->show();
+    updateActionChecks();
 }
 
 void DockManager::addBlockTableWidget()
 {
     auto *list = new BlockTableForm(this);
     list->setModbusClient(m_modbusClient);
-    createDockFor(list, tr("Статусы блоков"));
+    auto *dock = createDockFor(list, tr("Статусы блоков"));
+    dock->show();
+    updateActionChecks();
 }
 
 void DockManager::addModeControlWidget()
 {
     auto *modeControlForm = new ModeControlForm(this);
     connect(modeControlForm, &ModeControlForm::modeRequested, this, &DockManager::modeRequested);
-    createDockFor(modeControlForm, "Управление режимами");
+    auto *dock = createDockFor(modeControlForm, "Управление режимами");
+    dock->show();
+    updateActionChecks();
 }
 
+void DockManager::connectDockSignals(QDockWidget *dock)
+{
+    if (!dock) return;
+    connect(dock, &QDockWidget::visibilityChanged, this, [this](bool){ updateActionChecks(); });
+    connect(dock, &QObject::destroyed, this, [this](QObject*){ updateActionChecks(); });
+}
+
+void DockManager::updateActionChecks()
+{
+    bool anyTextVisible = false;
+    bool anyBlocksVisible = false;
+    bool anyModeVisible = false;
+    const auto docks = findChildren<QDockWidget*>();
+    for (auto *dock : docks) {
+        if (!dock->isVisible()) continue;
+        QWidget *w = dock->widget();
+        if (qobject_cast<QTextEdit*>(w)) anyTextVisible = true;
+        else if (qobject_cast<BlockTableForm*>(w)) anyBlocksVisible = true;
+        else if (qobject_cast<ModeControlForm*>(w)) anyModeVisible = true;
+    }
+    if (m_actAddText) m_actAddText->blockSignals(true), m_actAddText->setChecked(anyTextVisible), m_actAddText->blockSignals(false);
+    if (m_actAddBlockTable) m_actAddBlockTable->blockSignals(true), m_actAddBlockTable->setChecked(anyBlocksVisible), m_actAddBlockTable->blockSignals(false);
+    if (m_actAddModeControl) m_actAddModeControl->blockSignals(true), m_actAddModeControl->setChecked(anyModeVisible), m_actAddModeControl->blockSignals(false);
+}
+
+void DockManager::toggleText(bool on)
+{
+    bool found = false;
+    const auto docks = findChildren<QDockWidget*>();
+    for (auto *dock : docks) {
+        if (qobject_cast<QTextEdit*>(dock->widget())) {
+            found = true;
+            if (on) dock->show(); else dock->close();
+        }
+    }
+    if (on && !found) addSampleTextWidget();
+    updateActionChecks();
+}
+
+void DockManager::toggleBlockTable(bool on)
+{
+    bool found = false;
+    const auto docks = findChildren<QDockWidget*>();
+    for (auto *dock : docks) {
+        if (qobject_cast<BlockTableForm*>(dock->widget())) {
+            found = true;
+            if (on) dock->show(); else dock->close();
+        }
+    }
+    if (on && !found) addBlockTableWidget();
+    updateActionChecks();
+}
+
+void DockManager::toggleModeControl(bool on)
+{
+    bool found = false;
+    const auto docks = findChildren<QDockWidget*>();
+    for (auto *dock : docks) {
+        if (qobject_cast<ModeControlForm*>(dock->widget())) {
+            found = true;
+            if (on) dock->show(); else dock->close();
+        }
+    }
+    if (on && !found) addModeControlWidget();
+    updateActionChecks();
+}
 void DockManager::toggleDockTitles(bool show)
 {
     const auto docks = findChildren<QDockWidget*>();
@@ -226,6 +303,7 @@ void DockManager::loadDockContents(QSettings &settings)
         settings.endGroup();
     }
     settings.endGroup();
+    updateActionChecks();
 }
 
 QString DockManager::detectDockType(QWidget *content) const
@@ -273,6 +351,7 @@ void DockManager::restoreLayout()
     loadDockContents(s);
     restoreState(s.value("state").toByteArray());
     statusBar()->showMessage(tr("Раскладка восстановлена"), 2000);
+    updateActionChecks();
 }
 
 void DockManager::tileDocks()

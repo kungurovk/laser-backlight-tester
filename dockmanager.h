@@ -30,6 +30,9 @@ private slots:
     void addSampleTextWidget();
     void addBlockTableWidget();
     void addModeControlWidget();
+    void toggleText(bool on);
+    void toggleBlockTable(bool on);
+    void toggleModeControl(bool on);
     void toggleDockTitles(bool show);
     void saveLayout();
     void restoreLayout();
@@ -42,6 +45,8 @@ private:
     void createMenusAndToolbars();
     QDockWidget* createDockFor(QWidget *content, const QString &title);
     QDockWidget* createDockFor(QWidget *content, const QString &title, const QString &objectNameOverride);
+    void updateActionChecks();
+    void connectDockSignals(QDockWidget *dock);
     void relayoutGrid(bool cascade);
     void saveDockContents(QSettings &settings);
     void loadDockContents(QSettings &settings);

@@ -14,6 +14,8 @@ public:
     explicit Controller(QObject *parent = nullptr);
     ~Controller();
 
+    ModbusClient *modbusClient() const;
+
 public slots:
     void sendMessageForMode(Mode mode);
 

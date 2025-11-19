@@ -17,14 +17,6 @@ set(PROJECT_SOURCES
         main.cpp
         dockmanager.cpp
         dockmanager.h
-
-
-)
-
-if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(laser-backlight-tester
-        MANUAL_FINALIZATION
-        ${PROJECT_SOURCES}
         modbusclient.cpp
         modbusclient.h
         controller.h controller.cpp
@@ -32,6 +24,12 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         enums.h
         endianutils.h
         blocktableform.h blocktableform.cpp blocktableform.ui
+)
+
+if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
+    qt_add_executable(laser-backlight-tester
+        MANUAL_FINALIZATION
+        ${PROJECT_SOURCES}
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET laser-backlight-tester APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

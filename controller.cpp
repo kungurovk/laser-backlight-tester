@@ -37,6 +37,11 @@ Controller::~Controller()
     }
 }
 
+ModbusClient *Controller::modbusClient() const
+{
+    return m_modebusClient;
+}
+
 void Controller::sendMessageForMode(Mode mode)
 {
     emit sendMessage(ModeAddress::Address, toLittleEndian(mode));

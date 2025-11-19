@@ -1,6 +1,7 @@
 #include "dockmanager.h"
 #include "modecontrolform.h"
 #include "blocktableform.h"
+#include "modbusclient.h"
 
 #include <QDockWidget>
 #include <QMenuBar>
@@ -38,6 +39,19 @@ DockManager::DockManager(QWidget *parent)
         // Fallback demo content if nothing restored
         addSampleTextWidget();
         addBlockTableWidget();
+    }
+}
+
+void DockManager::setModbusClient(ModbusClient *client)
+{
+    if (m_modbusClient == client) {
+        return;
+    }
+
+    m_modbusClient = client;
+    const auto blockForms = findChildren<BlockTableForm*>();
+    for (auto *form : blockForms) {
+        form->setModbusClient(m_modbusClient);
     }
 }
 
@@ -141,7 +155,7 @@ void DockManager::addSampleTextWidget()
 void DockManager::addBlockTableWidget()
 {
     auto *list = new BlockTableForm(this);
-    // for (int i = 1; i <= 20; ++i) list->addItem(tr("Элемент %1").arg(i));
+    list->setModbusClient(m_modbusClient);
     createDockFor(list, tr("Статусы блоков"));
 }
 
@@ -230,12 +244,8 @@ QWidget* DockManager::createWidgetFromType(const QString &typeName, const QVaria
         w->setPlainText(payload.toString().isEmpty() ? tr("Восстановленный текстовый виджет") : payload.toString());
         return w;
     } else if (typeName == QLatin1String("blockTableForm")) {
-        auto *w = new QListWidget(this);
-        // if (payload.canConvert<QStringList>()) {
-        //     w->addItems(payload.toStringList());
-        // } else {
-        //     for (int i = 1; i <= 10; ++i) w->addItem(tr("Восстановленный %1").arg(i));
-        // }
+        auto *w = new BlockTableForm(this);
+        w->setModbusClient(m_modbusClient);
         return w;
     } else if (typeName == QLatin1String("modeControlForm")) {
         auto *modeControlForm = new ModeControlForm;

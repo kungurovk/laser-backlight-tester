@@ -4,6 +4,8 @@
 #include <QMainWindow>
 
 #include "enums.h"
+
+class ModbusClient;
 class QMenu;
 class QToolBar;
 class QDockWidget;
@@ -17,6 +19,7 @@ class DockManager : public QMainWindow
     Q_OBJECT
 public:
     explicit DockManager(QWidget *parent = nullptr);
+    void setModbusClient(ModbusClient *client);
 
 signals:
     void modeRequested(Mode mode);
@@ -59,6 +62,7 @@ private:
     QAction *m_actCascade = nullptr;
     QAction *m_actCloseAll = nullptr;
     int m_dockCounter = 0;
+    ModbusClient *m_modbusClient = nullptr;
 };
 
 #endif // DOCKMANAGER_H

@@ -8,9 +8,10 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     QCoreApplication::setApplicationName("Laser Backlight Tester");
-    DockManager w;
     Controller c;
+    DockManager w;
     QObject::connect(&w, &DockManager::modeRequested, &c, &Controller::sendMessageForMode);
+    w.setModbusClient(c.modbusClient());
     w.show();
     return a.exec();
 }

@@ -26,27 +26,27 @@ BlockTableForm::BlockTableForm(QWidget *parent)
     ui->setupUi(this);
     setupTable();
     populateTable();
-    connect(ui->tableWidget->horizontalHeader(), &QHeaderView::sectionResized,
+    connect(ui->blockTableWidget->horizontalHeader(), &QHeaderView::sectionResized,
             this, [this](int logicalIndex, int /*oldSize*/, int /*newSize*/) {
         Q_UNUSED(logicalIndex);
         const int col = 3; // actions column with QPushButton
-        const int rows = ui->tableWidget->rowCount();
+        const int rows = ui->blockTableWidget->rowCount();
         for (int r = 0; r < rows; ++r) {
-            const QModelIndex idx = ui->tableWidget->model()->index(r, col);
-            const QRect rect = ui->tableWidget->visualRect(idx);
+            const QModelIndex idx = ui->blockTableWidget->model()->index(r, col);
+            const QRect rect = ui->blockTableWidget->visualRect(idx);
             if (!rect.isNull()) {
-                if (QWidget *w = ui->tableWidget->cellWidget(r, col)) {
+                if (QWidget *w = ui->blockTableWidget->cellWidget(r, col)) {
                     w->setGeometry(rect);
                 }
-                ui->tableWidget->viewport()->update(rect);
+                ui->blockTableWidget->viewport()->update(rect);
             }
         }
-        ui->tableWidget->resizeRowsToContents();
-        ui->tableWidget->viewport()->update();
+        ui->blockTableWidget->resizeRowsToContents();
+        ui->blockTableWidget->viewport()->update();
     }, Qt::DirectConnection);
-    connect(ui->tableWidget->horizontalHeader(), &QHeaderView::geometriesChanged,
+    connect(ui->blockTableWidget->horizontalHeader(), &QHeaderView::geometriesChanged,
             this, [this]() {
-        ui->tableWidget->viewport()->update();
+        ui->blockTableWidget->viewport()->update();
     }, Qt::DirectConnection);
 }
 
@@ -85,10 +85,10 @@ void BlockTableForm::handleReadCompleted(int startAddress, const QVector<quint16
         }
 
         const int row = rowIt.value();
-        QTableWidgetItem *valueItem = ui->tableWidget->item(row, 2);
+        QTableWidgetItem *valueItem = ui->blockTableWidget->item(row, 2);
         if (!valueItem) {
             valueItem = new QTableWidgetItem;
-            ui->tableWidget->setItem(row, 2, valueItem);
+            ui->blockTableWidget->setItem(row, 2, valueItem);
         }
 
         const quint16 value = values.at(i);
@@ -104,11 +104,11 @@ void BlockTableForm::showDetails(int address)
         return;
     }
 
-    const QString name = ui->tableWidget->item(row, 1)
-            ? ui->tableWidget->item(row, 1)->text()
+    const QString name = ui->blockTableWidget->item(row, 1)
+            ? ui->blockTableWidget->item(row, 1)->text()
             : tr("Неизвестный блок");
-    const QString value = ui->tableWidget->item(row, 2)
-            ? ui->tableWidget->item(row, 2)->text()
+    const QString value = ui->blockTableWidget->item(row, 2)
+            ? ui->blockTableWidget->item(row, 2)->text()
             : tr("Н/Д");
 
     QMessageBox::information(this,
@@ -123,14 +123,14 @@ void BlockTableForm::showDetails(int address)
 
 void BlockTableForm::setupTable()
 {
-    ui->tableWidget->setColumnCount(4);
-    ui->tableWidget->setHorizontalHeaderLabels(
+    ui->blockTableWidget->setColumnCount(4);
+    ui->blockTableWidget->setHorizontalHeaderLabels(
         {tr("Адрес"), tr("Название"), tr("Значение"), tr("Действия")});
     // ui->tableWidget->horizontalHeader()->setStretchLastSection(true);
-    ui->tableWidget->verticalHeader()->setVisible(false);
-    ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    ui->tableWidget->setSelectionMode(QAbstractItemView::NoSelection);
-    ui->tableWidget->setFocusPolicy(Qt::NoFocus);
+    ui->blockTableWidget->verticalHeader()->setVisible(false);
+    ui->blockTableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->blockTableWidget->setSelectionMode(QAbstractItemView::NoSelection);
+    ui->blockTableWidget->setFocusPolicy(Qt::NoFocus);
 }
 
 void BlockTableForm::populateTable()
@@ -154,29 +154,29 @@ void BlockTableForm::populateTable()
         insertRow(entry);
     }
 
-    ui->tableWidget->resizeColumnsToContents();
+    ui->blockTableWidget->resizeColumnsToContents();
 }
 
 void BlockTableForm::insertRow(const BlockEntry &entry)
 {
-    const int row = ui->tableWidget->rowCount();
-    ui->tableWidget->insertRow(row);
+    const int row = ui->blockTableWidget->rowCount();
+    ui->blockTableWidget->insertRow(row);
 
     auto *addressItem = new QTableWidgetItem(makeAddressString(entry.address));
     addressItem->setData(Qt::UserRole, entry.address);
     addressItem->setTextAlignment(Qt::AlignCenter);
-    ui->tableWidget->setItem(row, 0, addressItem);
+    ui->blockTableWidget->setItem(row, 0, addressItem);
 
     auto *nameItem = new QTableWidgetItem(entry.name);
     nameItem->setTextAlignment(Qt::AlignTop | Qt::AlignLeft | Qt::TextWordWrap);
-    ui->tableWidget->setItem(row, 1, nameItem);
+    ui->blockTableWidget->setItem(row, 1, nameItem);
 
     auto *valueItem = new QTableWidgetItem(tr("Н/Д"));
     valueItem->setTextAlignment(Qt::AlignCenter);
-    ui->tableWidget->setItem(row, 2, valueItem);
+    ui->blockTableWidget->setItem(row, 2, valueItem);
 
-    auto *button = new QPushButton(tr("Подробнее"), ui->tableWidget);
-    ui->tableWidget->setCellWidget(row, 3, button);
+    auto *button = new QPushButton(tr("Подробнее"), ui->blockTableWidget);
+    ui->blockTableWidget->setCellWidget(row, 3, button);
     connect(button, &QPushButton::clicked, this, [this, entry] {
         showDetails(entry.address);
     });

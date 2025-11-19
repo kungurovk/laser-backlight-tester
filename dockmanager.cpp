@@ -57,7 +57,7 @@ void DockManager::setModbusClient(ModbusClient *client)
 
 void DockManager::createUi()
 {
-    auto *center = new QLabel(tr("Добавляйте доки через меню/панель инструментов"), this);
+    auto *center = new QLabel(tr("Добавляйте элементы через меню/панель инструментов"), this);
     center->setAlignment(Qt::AlignCenter);
     setCentralWidget(center);
 
@@ -69,11 +69,11 @@ void DockManager::createActions()
     m_actAddText = new QAction(tr("Добавить Текст"), this);
     connect(m_actAddText, &QAction::triggered, this, &DockManager::addSampleTextWidget);
 
-    m_actAddList = new QAction(tr("Статусы блоков"), this);
-    connect(m_actAddList, &QAction::triggered, this, &DockManager::addBlockTableWidget);
+    m_actAddBlockTable = new QAction(tr("Статусы блоков"), this);
+    connect(m_actAddBlockTable, &QAction::triggered, this, &DockManager::addBlockTableWidget);
 
-    m_actAddCustom = new QAction(tr("Управление режимами"), this);
-    connect(m_actAddCustom, &QAction::triggered, this, &DockManager::addModeControlWidget);
+    m_actAddModeControl = new QAction(tr("Управление режимами"), this);
+    connect(m_actAddModeControl, &QAction::triggered, this, &DockManager::addModeControlWidget);
 
     m_actShowTitles = new QAction(tr("Показывать заголовки"), this);
     m_actShowTitles->setCheckable(true);
@@ -92,7 +92,7 @@ void DockManager::createActions()
     m_actCascade = new QAction(tr("Каскад"), this);
     connect(m_actCascade, &QAction::triggered, this, &DockManager::cascadeDocks);
 
-    m_actCloseAll = new QAction(tr("Закрыть все доки"), this);
+    m_actCloseAll = new QAction(tr("Закрыть все"), this);
     connect(m_actCloseAll, &QAction::triggered, this, &DockManager::closeAllDocks);
 }
 
@@ -106,9 +106,9 @@ void DockManager::createMenusAndToolbars()
     m_viewMenu->addAction(m_actShowTitles);
 
     m_windowMenu = menuBar()->addMenu(tr("Окна"));
+    m_windowMenu->addAction(m_actAddModeControl);
     m_windowMenu->addAction(m_actAddText);
-    m_windowMenu->addAction(m_actAddList);
-    m_windowMenu->addAction(m_actAddCustom);
+    m_windowMenu->addAction(m_actAddBlockTable);
     m_windowMenu->addSeparator();
     m_windowMenu->addAction(m_actTile);
     m_windowMenu->addAction(m_actCascade);
@@ -117,9 +117,9 @@ void DockManager::createMenusAndToolbars()
 
     m_mainToolbar = addToolBar(tr("Главная"));
     m_mainToolbar->setObjectName(QStringLiteral("MainToolbar"));
+    m_mainToolbar->addAction(m_actAddModeControl);
     m_mainToolbar->addAction(m_actAddText);
-    m_mainToolbar->addAction(m_actAddList);
-    m_mainToolbar->addAction(m_actAddCustom);
+    m_mainToolbar->addAction(m_actAddBlockTable);
     m_mainToolbar->addSeparator();
     m_mainToolbar->addAction(m_actTile);
     m_mainToolbar->addAction(m_actCascade);

@@ -53,8 +53,8 @@ private:
     QMenu *m_windowMenu = nullptr;
     QToolBar *m_mainToolbar = nullptr;
     QAction *m_actAddText = nullptr;
-    QAction *m_actAddList = nullptr;
-    QAction *m_actAddCustom = nullptr;
+    QAction *m_actAddBlockTable = nullptr;
+    QAction *m_actAddModeControl = nullptr;
     QAction *m_actShowTitles = nullptr;
     QAction *m_actSaveLayout = nullptr;
     QAction *m_actRestoreLayout = nullptr;

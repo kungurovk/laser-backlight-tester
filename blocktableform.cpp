@@ -136,18 +136,18 @@ void BlockTableForm::setupTable()
 void BlockTableForm::populateTable()
 {
     m_entries = {
-        { BlockTableAddress::LaserControlBoardStatus,        tr("Статус платы управления лазером") },
-        { BlockTableAddress::PowerSupplyControlStatus,       tr("Статус блока питания управления") },
-        { BlockTableAddress::PowerSupplyQuantumtronsStatus1, tr("Статус блока питания кванторов #1") },
-        { BlockTableAddress::PowerSupplyQuantumtronsStatus2, tr("Статус блока питания кванторов #2") },
-        { BlockTableAddress::PowerSupplyQuantumtronsStatus3, tr("Статус блока питания кванторов #3") },
-        { BlockTableAddress::PowerSupplyQuantumtronsStatus4, tr("Статус блока питания кванторов #4") },
-        { BlockTableAddress::PowerSupplyQuantumtronsStatus5, tr("Статус блока питания кванторов #5") },
-        { BlockTableAddress::PowerSupplyQuantumtronsStatus6, tr("Статус блока питания кванторов #6") },
-        { BlockTableAddress::PowerSupplyQuantumtronsStatus7, tr("Статус блока питания кванторов #7") },
-        { BlockTableAddress::PowerSupplyQuantumtronsStatus8, tr("Статус блока питания кванторов #8") },
-        { BlockTableAddress::PowerSupplyQuantumtronsStatus9, tr("Статус блока питания кванторов #9") },
-        { BlockTableAddress::PowerSupplyQuantumtronsStatus10,tr("Статус блока питания кванторов #10")}
+        { BlockTableAddress::LaserControlBoardStatus,         tr("Статус платы управления лазером") },
+        { BlockTableAddress::PowerSupplyControlStatus,        tr("Статус блока питания управления") },
+        { BlockTableAddress::PowerSupplyQuantumtronsStatus_1, tr("Статус блока питания кванторов #1") },
+        { BlockTableAddress::PowerSupplyQuantumtronsStatus_2, tr("Статус блока питания кванторов #2") },
+        { BlockTableAddress::PowerSupplyQuantumtronsStatus_3, tr("Статус блока питания кванторов #3") },
+        { BlockTableAddress::PowerSupplyQuantumtronsStatus_4, tr("Статус блока питания кванторов #4") },
+        { BlockTableAddress::PowerSupplyQuantumtronsStatus_5, tr("Статус блока питания кванторов #5") },
+        { BlockTableAddress::PowerSupplyQuantumtronsStatus_6, tr("Статус блока питания кванторов #6") },
+        { BlockTableAddress::PowerSupplyQuantumtronsStatus_7, tr("Статус блока питания кванторов #7") },
+        { BlockTableAddress::PowerSupplyQuantumtronsStatus_8, tr("Статус блока питания кванторов #8") },
+        { BlockTableAddress::PowerSupplyQuantumtronsStatus_9, tr("Статус блока питания кванторов #9") },
+        { BlockTableAddress::PowerSupplyQuantumtronsStatus_10,tr("Статус блока питания кванторов #10")}
     };
 
     for (const auto &entry : m_entries) {

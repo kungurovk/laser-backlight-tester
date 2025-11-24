@@ -15,6 +15,12 @@ enum ModeAddress
     Address = 0x00
 };
 
+enum States
+{
+    On  = 0x01,
+    Off = 0x00,
+};
+
 enum SensorsTableAddress
 {
     BoardOperatingMode      = 0x100,
@@ -23,30 +29,74 @@ enum SensorsTableAddress
     CaseTemperature_2       = 0x104,
     CoolantTemperature_1    = 0x106,
     CoolantTemperature_2    = 0x108,
-    CoolantFlowRate_1       = 0x10A,
-    CoolantFlowRate_2       = 0x10C,
-    CoolantFlowRate_3       = 0x10E,
+    CoolantFlowRate_1       = 0x10a,
+    CoolantFlowRate_2       = 0x10c,
+    CoolantFlowRate_3       = 0x10e,
     AirHumidity_1           = 0x110,
     AitTemperature_1        = 0x112,
     AirHumidity_2           = 0x114,
     AitTemperature_2        = 0x116,
     LaserPower              = 0x118,
+    CrystalTemperature_1    = 0x11a,
+    CrystalTemperature_2    = 0x11c,
+    LaserWorkTime           = 0x12c,
 };
 
 enum BlockTableAddress
 {
-    LaserControlBoardStatus         = 0x11e,
-    PowerSupplyControlStatus        = 0x120,
-    PowerSupplyQuantumtronsStatus1  = 0x122,
-    PowerSupplyQuantumtronsStatus2  = 0x123,
-    PowerSupplyQuantumtronsStatus3  = 0x124,
-    PowerSupplyQuantumtronsStatus4  = 0x125,
-    PowerSupplyQuantumtronsStatus5  = 0x126,
-    PowerSupplyQuantumtronsStatus6  = 0x127,
-    PowerSupplyQuantumtronsStatus7  = 0x128,
-    PowerSupplyQuantumtronsStatus8  = 0x129,
-    PowerSupplyQuantumtronsStatus9  = 0x12a,
-    PowerSupplyQuantumtronsStatus10 = 0x12b,
+    LaserControlBoardStatus          = 0x11e,
+    PowerSupplyControlStatus         = 0x120,
+    PowerSupplyQuantumtronsStatus_1  = 0x122,
+    PowerSupplyQuantumtronsStatus_2  = 0x123,
+    PowerSupplyQuantumtronsStatus_3  = 0x124,
+    PowerSupplyQuantumtronsStatus_4  = 0x125,
+    PowerSupplyQuantumtronsStatus_5  = 0x126,
+    PowerSupplyQuantumtronsStatus_6  = 0x127,
+    PowerSupplyQuantumtronsStatus_7  = 0x128,
+    PowerSupplyQuantumtronsStatus_8  = 0x129,
+    PowerSupplyQuantumtronsStatus_9  = 0x12a,
+    PowerSupplyQuantumtronsStatus_10 = 0x12b,
+};
+
+enum ValuesTableAddress
+{
+    CaseTemperatureMinValue_1       = 0x200,
+    CaseTemperatureMaxValue_1       = 0x202,
+    CaseTemperatureMinValue_2       = 0x204,
+    CaseTemperatureMaxValue_2       = 0x206,
+    CoolantTemperatureMinValue_1    = 0x208,
+    CoolantTemperatureMaxValue_1    = 0x20a,
+    CoolantTemperatureMinValue_2    = 0x20c,
+    CoolantTemperatureMaxValue_2    = 0x20e,
+    FlowRateMinValue_1              = 0x210,
+    FlowRateMaxValue_1              = 0x212,
+    FlowRateMinValue_2              = 0x214,
+    FlowRateMaxValue_2              = 0x216,
+    FlowRateMinValue_3              = 0x218,
+    FlowRateMaxValue_3              = 0x21a,
+    AirHumidityMinValue_1           = 0x21c,
+    AirHumidityMaxValue_1           = 0x21e,
+    AirTemperatureMinValue_1        = 0x220,
+    AirTemperatureMaxValue_1        = 0x222,
+    AirHumidityMinValue_2           = 0x224,
+    AirHumidityMaxValue_2           = 0x226,
+    AirTemperatureMinValue_2        = 0x228,
+    AirTemperatureMaxValue_2        = 0x22a,
+    PowerLaserMinValue              = 0x22c,
+    PowerLaserMaxValue              = 0x22e,
+    CrystalTemperatureTarget_1      = 0x230,
+    CrystalTemperatureTarget_2      = 0x232,
+    KP_PID_LBO                      = 0x234,
+    KI_PID_LBO                      = 0x236,
+    KD_PID_LBO                      = 0x238,
+};
+
+enum GeneratorSetterAddress
+{
+    TermoStableOnOff    = 0x500,
+    ImpulseOnOff        = 0x501,
+    DiodTemperature     = 0x502,
+    CrystalTemperature  = 0x504,
 };
 
 #endif // ENUMS_H

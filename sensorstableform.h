@@ -3,6 +3,8 @@
 
 #include <QWidget>
 
+class ModbusClient;
+
 namespace Ui {
 class SensorsTableForm;
 }
@@ -15,8 +17,27 @@ public:
     explicit SensorsTableForm(QWidget *parent = nullptr);
     ~SensorsTableForm();
 
+    void setModbusClient(ModbusClient *client);
+
+private slots:
+    void handleReadCompleted(int startAddress, const QVector<quint16> &values);
+
 private:
+    struct BlockEntry
+    {
+        int address;
+        QString name;
+    };
+
+    void setupTable();
+    void populateTable();
+    void insertRow(const BlockEntry &entry);
+    void requestAllValues() const;
+
     Ui::SensorsTableForm *ui;
+    ModbusClient *m_modbusClient = nullptr;
+    QVector<BlockEntry> m_entries;
+    QHash<int, int> m_addressToRow;
 };
 
 #endif // SENSORSTABLEFORM_H

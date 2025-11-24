@@ -129,8 +129,9 @@ void BlockTableForm::setupTable()
     // ui->tableWidget->horizontalHeader()->setStretchLastSection(true);
     ui->blockTableWidget->verticalHeader()->setVisible(false);
     ui->blockTableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    ui->blockTableWidget->setSelectionMode(QAbstractItemView::NoSelection);
+    // ui->blockTableWidget->setSelectionMode(QAbstractItemView::NoSelection);
     ui->blockTableWidget->setFocusPolicy(Qt::NoFocus);
+    ui->blockTableWidget->horizontalHeader()->setHighlightSections(false);
 }
 
 void BlockTableForm::populateTable()

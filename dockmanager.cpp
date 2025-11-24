@@ -1,6 +1,7 @@
 #include "dockmanager.h"
 #include "modecontrolform.h"
 #include "blocktableform.h"
+#include "sensorstableform.h"
 #include "modbusclient.h"
 
 #include <QDockWidget>
@@ -37,7 +38,8 @@ DockManager::DockManager(QWidget *parent)
     restoreLayout();
     if (findChildren<QDockWidget*>().isEmpty()) {
         // Fallback demo content if nothing restored
-        addSampleTextWidget();
+        addModeControlWidget();
+        addSensorTableWidget();
         addBlockTableWidget();
     }
 }
@@ -66,9 +68,9 @@ void DockManager::createUi()
 
 void DockManager::createActions()
 {
-    m_actAddText = new QAction(tr("Добавить Текст"), this);
-    m_actAddText->setCheckable(true);
-    connect(m_actAddText, &QAction::toggled, this, &DockManager::toggleText);
+    m_actAddSensorTable = new QAction(tr("Показания датчиков"), this);
+    m_actAddSensorTable->setCheckable(true);
+    connect(m_actAddSensorTable, &QAction::toggled, this, &DockManager::toggleSensorsTable);
 
     m_actAddBlockTable = new QAction(tr("Статусы блоков"), this);
     m_actAddBlockTable->setCheckable(true);
@@ -110,7 +112,7 @@ void DockManager::createMenusAndToolbars()
 
     m_windowMenu = menuBar()->addMenu(tr("Окна"));
     m_windowMenu->addAction(m_actAddModeControl);
-    m_windowMenu->addAction(m_actAddText);
+    m_windowMenu->addAction(m_actAddSensorTable);
     m_windowMenu->addAction(m_actAddBlockTable);
     m_windowMenu->addSeparator();
     m_windowMenu->addAction(m_actTile);
@@ -121,7 +123,7 @@ void DockManager::createMenusAndToolbars()
     m_mainToolbar = addToolBar(tr("Главная"));
     m_mainToolbar->setObjectName(QStringLiteral("MainToolbar"));
     m_mainToolbar->addAction(m_actAddModeControl);
-    m_mainToolbar->addAction(m_actAddText);
+    m_mainToolbar->addAction(m_actAddSensorTable);
     m_mainToolbar->addAction(m_actAddBlockTable);
     m_mainToolbar->addSeparator();
     m_mainToolbar->addAction(m_actTile);
@@ -150,20 +152,19 @@ QDockWidget* DockManager::createDockFor(QWidget *content, const QString &title, 
     return dock;
 }
 
-void DockManager::addSampleTextWidget()
+void DockManager::addSensorTableWidget()
 {
-    auto *text = new QTextEdit(this);
-    text->setPlainText(tr("Это пример текстового редактора. Перетащите в любую область или объедините во вкладки."));
-    auto *dock = createDockFor(text, tr("Текст"));
+    auto *sensors = new SensorsTableForm(this);
+    auto *dock = createDockFor(sensors, tr("Показания датчиков"));
     dock->show();
     updateActionChecks();
 }
 
 void DockManager::addBlockTableWidget()
 {
-    auto *list = new BlockTableForm(this);
-    list->setModbusClient(m_modbusClient);
-    auto *dock = createDockFor(list, tr("Статусы блоков"));
+    auto *block = new BlockTableForm(this);
+    block->setModbusClient(m_modbusClient);
+    auto *dock = createDockFor(block, tr("Статусы блоков"));
     dock->show();
     updateActionChecks();
 }
@@ -186,33 +187,33 @@ void DockManager::connectDockSignals(QDockWidget *dock)
 
 void DockManager::updateActionChecks()
 {
-    bool anyTextVisible = false;
+    bool anySensorsVisible = false;
     bool anyBlocksVisible = false;
     bool anyModeVisible = false;
     const auto docks = findChildren<QDockWidget*>();
     for (auto *dock : docks) {
         if (!dock->isVisible()) continue;
         QWidget *w = dock->widget();
-        if (qobject_cast<QTextEdit*>(w)) anyTextVisible = true;
+        if (qobject_cast<SensorsTableForm*>(w)) anySensorsVisible = true;
         else if (qobject_cast<BlockTableForm*>(w)) anyBlocksVisible = true;
         else if (qobject_cast<ModeControlForm*>(w)) anyModeVisible = true;
     }
-    if (m_actAddText) m_actAddText->blockSignals(true), m_actAddText->setChecked(anyTextVisible), m_actAddText->blockSignals(false);
+    if (m_actAddSensorTable) m_actAddSensorTable->blockSignals(true), m_actAddSensorTable->setChecked(anySensorsVisible), m_actAddSensorTable->blockSignals(false);
     if (m_actAddBlockTable) m_actAddBlockTable->blockSignals(true), m_actAddBlockTable->setChecked(anyBlocksVisible), m_actAddBlockTable->blockSignals(false);
     if (m_actAddModeControl) m_actAddModeControl->blockSignals(true), m_actAddModeControl->setChecked(anyModeVisible), m_actAddModeControl->blockSignals(false);
 }
 
-void DockManager::toggleText(bool on)
+void DockManager::toggleSensorsTable(bool on)
 {
     bool found = false;
     const auto docks = findChildren<QDockWidget*>();
     for (auto *dock : docks) {
-        if (qobject_cast<QTextEdit*>(dock->widget())) {
+        if (qobject_cast<SensorsTableForm*>(dock->widget())) {
             found = true;
             if (on) dock->show(); else dock->close();
         }
     }
-    if (on && !found) addSampleTextWidget();
+    if (on && !found) addSensorTableWidget();
     updateActionChecks();
 }
 
@@ -308,7 +309,7 @@ void DockManager::loadDockContents(QSettings &settings)
 
 QString DockManager::detectDockType(QWidget *content) const
 {
-    if (qobject_cast<QTextEdit*>(content)) return QStringLiteral("text");
+    if (qobject_cast<SensorsTableForm*>(content)) return QStringLiteral("sensorsTableForm");
     if (qobject_cast<BlockTableForm*>(content)) return QStringLiteral("blockTableForm");
     if (qobject_cast<ModeControlForm*>(content)) return QStringLiteral("modeControlForm");
     return QStringLiteral("unknown");
@@ -317,9 +318,8 @@ QString DockManager::detectDockType(QWidget *content) const
 QWidget* DockManager::createWidgetFromType(const QString &typeName, const QVariant &payload)
 {
     Q_UNUSED(payload)
-    if (typeName == QLatin1String("text")) {
-        auto *w = new QTextEdit(this);
-        w->setPlainText(payload.toString().isEmpty() ? tr("Восстановленный текстовый виджет") : payload.toString());
+    if (typeName == QLatin1String("sensorsTableForm")) {
+        auto *w = new SensorsTableForm(this);
         return w;
     } else if (typeName == QLatin1String("blockTableForm")) {
         auto *w = new BlockTableForm(this);

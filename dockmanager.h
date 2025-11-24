@@ -27,10 +27,10 @@ signals:
 protected:
     void closeEvent(QCloseEvent *event) override;
 private slots:
-    void addSampleTextWidget();
+    void addSensorTableWidget();
     void addBlockTableWidget();
     void addModeControlWidget();
-    void toggleText(bool on);
+    void toggleSensorsTable(bool on);
     void toggleBlockTable(bool on);
     void toggleModeControl(bool on);
     void toggleDockTitles(bool show);
@@ -57,7 +57,7 @@ private:
     QMenu *m_viewMenu = nullptr;
     QMenu *m_windowMenu = nullptr;
     QToolBar *m_mainToolbar = nullptr;
-    QAction *m_actAddText = nullptr;
+    QAction *m_actAddSensorTable = nullptr;
     QAction *m_actAddBlockTable = nullptr;
     QAction *m_actAddModeControl = nullptr;
     QAction *m_actShowTitles = nullptr;

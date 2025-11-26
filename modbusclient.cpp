@@ -7,6 +7,8 @@
 #include <QLoggingCategory>
 #include <QVariant>
 
+#include <QTimer>
+
 namespace {
 QLoggingCategory lcModbusClient("modbus.client");
 }
@@ -28,6 +30,11 @@ ModbusClient::ModbusClient(QObject *parent)
             return;
         }
         emit errorOccurred(tr("Modbus client error: %1").arg(m_client->errorString()));
+    });
+
+    // test
+    QTimer::singleShot(1000, [this](){
+        emit readCompleted(0x122, {0x0500});
     });
 }
 

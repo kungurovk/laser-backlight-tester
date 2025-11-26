@@ -99,4 +99,12 @@ enum GeneratorSetterAddress
     CrystalTemperature  = 0x504,
 };
 
+enum BlockStatusBitNumbers
+{
+    PowerSupply             = 0,
+    FrequencyModeControl    = 1,
+    Synchronization         = 2,
+    PowerSupplyReadySignal  = 5,
+};
+
 #endif // ENUMS_H

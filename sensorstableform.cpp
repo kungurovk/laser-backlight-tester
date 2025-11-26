@@ -125,7 +125,7 @@ void SensorsTableForm::insertRow(const BlockEntry &entry)
     ui->sensorsTableWidget->setItem(row, 0, addressItem);
 
     auto *nameItem = new QTableWidgetItem(entry.name);
-    nameItem->setTextAlignment(Qt::AlignTop | Qt::AlignLeft | Qt::TextWordWrap);
+    nameItem->setTextAlignment(Qt::AlignVCenter | Qt::AlignLeft | Qt::TextWordWrap);
     ui->sensorsTableWidget->setItem(row, 1, nameItem);
 
     auto *valueItem = new QTableWidgetItem(tr("Н/Д"));

@@ -5,6 +5,7 @@
 #include <QVector>
 #include <QWidget>
 #include <QString>
+#include <QVariant>
 
 class ModbusClient;
 
@@ -22,9 +23,6 @@ public:
 
     void setModbusClient(ModbusClient *client);
 
-signals:
-    void detailsRequested(int address);
-
 private slots:
     void handleReadCompleted(int startAddress, const QVector<quint16> &values);
     void showDetails(int address);
@@ -36,15 +34,27 @@ private:
         QString name;
     };
 
+    struct BlockStatusEntry
+    {
+        int address;
+        QString name;
+        QVariant value;
+    };
+
     void setupTable();
-    void populateTable();
+    void setupBlockStatusTable();
+    void populateBlockTable();
+    void populateBlockStatusTable(QVariant value);
     void insertRow(const BlockEntry &entry);
+    void insertRowBlockStatus(const BlockStatusEntry &entry);
     void requestAllValues() const;
 
     Ui::BlockTableForm *ui;
     ModbusClient *m_modbusClient = nullptr;
     QVector<BlockEntry> m_entries;
     QHash<int, int> m_addressToRow;
+
+    QVector<BlockStatusEntry> m_blockStatusEntries;
 };
 
 #endif // BLOCKTABLEFORM_H

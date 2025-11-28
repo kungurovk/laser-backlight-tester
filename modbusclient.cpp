@@ -34,6 +34,8 @@ ModbusClient::ModbusClient(QObject *parent)
 
     // test
     QTimer::singleShot(1000, [this](){
+        // emit readCompleted(0x11e, {0x0500, 0x0006}); //25-26 = 3
+        emit readCompleted(0x11e, {0x0500, 0x0004}); //25-26 = 2
         emit readCompleted(0x122, {0x0500});
     });
 }

@@ -99,12 +99,48 @@ enum GeneratorSetterAddress
     CrystalTemperature  = 0x504,
 };
 
-enum BlockStatusBitNumbers
+enum PowerSupplyQuantumtronsStatusBits
 {
     PowerSupply             = 0,
     FrequencyModeControl    = 1,
     Synchronization         = 2,
     PowerSupplyReadySignal  = 5,
+};
+
+enum LaserControlBoardStatusBits
+{
+    HeaterStatus = 0,
+    TempOfCase_1BelowMinLimit,
+    TempOfCase_1AboveMaxLimit,
+    TempOfCase_2BelowMinLimit,
+    TempOfCase_2AboveMaxLimit,
+    TempOfCool_1BelowMinLimit,
+    TempOfCool_1AboveMaxLimit,
+    TempOfCool_2BelowMinLimit,
+    TempOfCool_2AboveMaxLimit,
+    CoolFlowRate_1BelowMinLimit,
+    CoolFlowRate_1AboveMaxLimit,
+    CoolFlowRate_2BelowMinLimit,
+    CoolFlowRate_2AboveMaxLimit,
+    CoolFlowRate_3BelowMinLimit,
+    CoolFlowRate_3AboveMaxLimit,
+    AirHumidity_1BelowMinLimit,
+    AirHumidity_1AboveMaxLimit,
+    AirTemperature_1BelowMinLimit,
+    AirTemperature_1AboveMaxLimit,
+    AirHumidity_2BelowMinLimit,
+    AirHumidity_2AboveMaxLimit,
+    AirTemperature_2BelowMinLimit,
+    AirTemperature_2AboveMaxLimit,
+    PowerLaser_2BelowMinLimit,
+    PowerLaser_2AboveMaxLimit,
+    LaserWorkMode_1Bit,
+    LaserWorkMode_2Bit,
+    SignalIsGood,
+    SignalIsReady,
+    StateOfMasterOscillatorPumpSyncPulse,
+    StateOfAmplifierPumpSyncPulse,
+    StateOfRadiationGenerationSyncPulse
 };
 
 #endif // ENUMS_H

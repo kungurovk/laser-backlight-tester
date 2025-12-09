@@ -127,6 +127,8 @@ void BlockTableForm::showDetails(int address)
     //if addr
     if (address == BlockTableAddress::LaserControlBoardStatus)
         fillLaserControlBoardStatus();
+    else if (address == BlockTableAddress::PowerSupplyControlStatus)
+        fillGeneratorSetterStatus();
     else
         fillPowerSupplyQuantumtronsStatus();
 
@@ -220,6 +222,32 @@ void BlockTableForm::fillLaserControlBoardStatus()
     };
 }
 
+void BlockTableForm::fillGeneratorSetterStatus()
+{
+    m_blockStatusEntries = {
+        { GeneratorSetterStatusBits::ThermalStabilizationEnabled,                   tr("Термостабилизации включена") },
+        { GeneratorSetterStatusBits::LaserDiodeTemperatureNormal,                   tr("Температура лазерного диода в норме") },
+        { GeneratorSetterStatusBits::LaserDiodeOverheated,                          tr("Перегрев лазерного диода") },
+        { GeneratorSetterStatusBits::DoublerCrystalTemperatureNormal,               tr("Температура кристалла удвоителя в норме") },
+        { GeneratorSetterStatusBits::DoublerCrystalOverheated,                      tr("Перегрев кристалла удвоителя") },
+        { GeneratorSetterStatusBits::TwelveVPowerSourceEnabled,                     tr("Силовой источник 12 В включен") },
+        { GeneratorSetterStatusBits::LaserModuleOperational,                        tr("Лазерный модуль в рабочем состоянии") },
+        { GeneratorSetterStatusBits::LaserDiodeVoltageRegulatorEnabled,             tr("Регулятор напряжения лазерного диода включен") },
+        { GeneratorSetterStatusBits::LaserDiodeCurrentPulsesEnabled,                tr("Импульсы тока лазерного диода включены") },
+        { GeneratorSetterStatusBits::CoolerOverheated,                              tr("Перегрев охладителя") },
+        { GeneratorSetterStatusBits::PowerTransistorOverheated,                     tr("Перегрев силового транзистора") },
+        { GeneratorSetterStatusBits::LaserDiodeOvercurrent,                         tr("Превышение тока лазерного диода") },
+        { GeneratorSetterStatusBits::PowerTransistorOvervoltage,                    tr("Превышение напряжения на силовом транзисторе") },
+        { GeneratorSetterStatusBits::AcoustoOpticShutterDriverFailure,              tr("Сбой драйвера акустооптического затвора") },
+        { GeneratorSetterStatusBits::ExternalLock,                                  tr("Внешняя блокировка") },
+        { GeneratorSetterStatusBits::SystemConfigurationLoaded,                     tr("Системная конфигурация загружена") },
+        { GeneratorSetterStatusBits::DriverConfigurationLoaded,                     tr("Конфигурация драйвера загружена") },
+        { GeneratorSetterStatusBits::TimingConfigurationLoaded,                     tr("Конфигурация тайминга загружена") },
+        { GeneratorSetterStatusBits::DiodeThermalStabilizationConfigurationLoaded,  tr("Конфигурация термостабилизации диода загружена") },
+        { GeneratorSetterStatusBits::CrystalThermalStabilizationConfigurationLoaded,tr("Конфигурация термостабилизации кристалла загружена") }
+    };
+}
+
 void BlockTableForm::fillPowerSupplyQuantumtronsStatus()
 {
     m_blockStatusEntries = {
@@ -276,6 +304,7 @@ void BlockTableForm::insertRowBlockStatus(const BlockStatusEntry &entry)
     quint32 value = (entry.value.toUInt() >> entry.address) & 1u;
     QString numOfBit = QString::number(entry.address);
     if (m_addressToRow.key(ui->blockTableWidget->currentRow()) == BlockTableAddress::LaserControlBoardStatus)
+    {
         if (entry.address == LaserControlBoardStatusBits::LaserWorkMode_1Bit)
         {
             numOfBit += "-" + QString::number(LaserControlBoardStatusBits::LaserWorkMode_2Bit);
@@ -283,6 +312,7 @@ void BlockTableForm::insertRowBlockStatus(const BlockStatusEntry &entry)
             const quint32 b2 = ((entry.value.toUInt() >> LaserControlBoardStatusBits::LaserWorkMode_2Bit) & 1u);
             value = (b2 << 1) | b1;
         }
+    }
 
     auto *addressItem = new QTableWidgetItem(numOfBit);
     addressItem->setData(Qt::UserRole, numOfBit);

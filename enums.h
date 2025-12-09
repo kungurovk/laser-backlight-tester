@@ -12,7 +12,7 @@ enum Mode : unsigned short
 
 enum ModeAddress
 {
-    Address = 0x00
+    Address = 0x00,
 };
 
 enum States
@@ -140,7 +140,31 @@ enum LaserControlBoardStatusBits
     SignalIsReady,
     StateOfMasterOscillatorPumpSyncPulse,
     StateOfAmplifierPumpSyncPulse,
-    StateOfRadiationGenerationSyncPulse
+    StateOfRadiationGenerationSyncPulse,
+};
+
+enum GeneratorSetterStatusBits
+{
+    ThermalStabilizationEnabled = 0,
+    LaserDiodeTemperatureNormal,
+    LaserDiodeOverheated,
+    DoublerCrystalTemperatureNormal,
+    DoublerCrystalOverheated,
+    TwelveVPowerSourceEnabled,
+    LaserModuleOperational,
+    LaserDiodeVoltageRegulatorEnabled,
+    LaserDiodeCurrentPulsesEnabled,
+    CoolerOverheated,
+    PowerTransistorOverheated,
+    LaserDiodeOvercurrent,
+    PowerTransistorOvervoltage,
+    AcoustoOpticShutterDriverFailure,
+    ExternalLock,
+    SystemConfigurationLoaded,
+    DriverConfigurationLoaded,
+    TimingConfigurationLoaded,
+    DiodeThermalStabilizationConfigurationLoaded,
+    CrystalThermalStabilizationConfigurationLoaded,
 };
 
 #endif // ENUMS_H

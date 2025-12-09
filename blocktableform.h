@@ -45,6 +45,7 @@ private:
     void setupBlockStatusTable();
     void populateBlockTable();
     void fillLaserControlBoardStatus();
+    void fillGeneratorSetterStatus();
     void fillPowerSupplyQuantumtronsStatus();
     void populateBlockStatusTable(QVariant value);
     void insertRow(const BlockEntry &entry);

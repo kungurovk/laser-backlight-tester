@@ -51,9 +51,11 @@ void DockManager::setModbusClient(ModbusClient *client)
     }
 
     m_modbusClient = client;
-    const auto blockForms = findChildren<BlockTableForm*>();
-    for (auto *form : blockForms) {
-        form->setModbusClient(m_modbusClient);
+    const auto widgets = findChildren<QWidget*>();
+    for (auto *widget : widgets) {
+        if (auto *form = dynamic_cast<ModbusBase*>(widget)) {
+            form->setModbusClient(m_modbusClient);
+        }
     }
 }
 

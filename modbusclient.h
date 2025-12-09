@@ -8,6 +8,13 @@
 
 class QModbusReply;
 class QModbusTcpClient;
+class ModbusClient;
+
+class ModbusBase
+{
+public:
+    virtual void setModbusClient(ModbusClient *client) = 0;
+};
 
 /**
  * @brief Qt wrapper around QModbusTcpClient that exposes a high-level API for Modbus TCP communication.

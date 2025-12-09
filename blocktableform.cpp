@@ -2,7 +2,6 @@
 #include "ui_blocktableform.h"
 
 #include "enums.h"
-#include "modbusclient.h"
 #include "endianutils.h"
 
 #include <QAbstractItemView>
@@ -89,7 +88,9 @@ void BlockTableForm::handleReadCompleted(int startAddress, const QVector<quint16
     std::variant<quint16, quint32> value;
 
     if (startAddress == BlockTableAddress::LaserControlBoardStatus ||
-        startAddress == BlockTableAddress::PowerSupplyControlStatus) {
+        startAddress == BlockTableAddress::PowerSupplyControlStatus ||
+        startAddress == SensorsTableAddress::LaserWorkTime)
+    {
         value = (quint32(toBigEndian(values.last())) << 16) | toBigEndian(values.first());
     } else {
         value = toBigEndian(values.first());

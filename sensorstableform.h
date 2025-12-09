@@ -3,13 +3,15 @@
 
 #include <QWidget>
 
+#include "modbusclient.h"
+
 class ModbusClient;
 
 namespace Ui {
 class SensorsTableForm;
 }
 
-class SensorsTableForm : public QWidget
+class SensorsTableForm : public QWidget, public ModbusBase
 {
     Q_OBJECT
 

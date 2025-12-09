@@ -7,13 +7,15 @@
 #include <QString>
 #include <QVariant>
 
+#include "modbusclient.h"
+
 class ModbusClient;
 
 namespace Ui {
 class BlockTableForm;
 }
 
-class BlockTableForm : public QWidget
+class BlockTableForm : public QWidget, public ModbusBase
 {
     Q_OBJECT
 
@@ -21,7 +23,7 @@ public:
     explicit BlockTableForm(QWidget *parent = nullptr);
     ~BlockTableForm();
 
-    void setModbusClient(ModbusClient *client);
+    void setModbusClient(ModbusClient *client) override;
 
 private slots:
     void handleReadCompleted(int startAddress, const QVector<quint16> &values);

@@ -79,7 +79,7 @@ void BlockTableForm::setModbusClient(ModbusClient *client)
     if (m_modbusClient) {
         connect(m_modbusClient, &ModbusClient::readCompleted,
                 this, &BlockTableForm::handleReadCompleted);
-        // requestAllValues();
+        requestAllValues();
     }
 }
 
@@ -88,8 +88,7 @@ void BlockTableForm::handleReadCompleted(int startAddress, const QVector<quint16
     std::variant<quint16, quint32> value;
 
     if (startAddress == BlockTableAddress::LaserControlBoardStatus ||
-        startAddress == BlockTableAddress::PowerSupplyControlStatus ||
-        startAddress == SensorsTableAddress::LaserWorkTime)
+        startAddress == BlockTableAddress::PowerSupplyControlStatus)
     {
         value = (quint32(toBigEndian(values.last())) << 16) | toBigEndian(values.first());
     } else {
@@ -357,7 +356,9 @@ void BlockTableForm::requestAllValues() const
                                       if (!client) {
                                           return;
                                       }
-                                      client->readHoldingRegisters(address, 1);
+                                      client->readHoldingRegisters(address,
+                                                                   address == BlockTableAddress::LaserControlBoardStatus ||
+                                                                    address == BlockTableAddress::PowerSupplyControlStatus ? 2 : 1);
                                   },
                                   Qt::QueuedConnection);
     }

@@ -75,28 +75,28 @@ void SensorsTableForm::handleReadCompleted(int startAddress, const QVector<quint
         value = fValue;
     }
 
-        const auto rowIt = m_addressToRow.constFind(startAddress);
-        if (rowIt == m_addressToRow.constEnd()) {
-            return;
-        }
+    const auto rowIt = m_addressToRow.constFind(startAddress);
+    if (rowIt == m_addressToRow.constEnd()) {
+        return;
+    }
 
-        const int row = rowIt.value();
-        QTableWidgetItem *valueItem = ui->sensorsTableWidget->item(row, 2);
-        if (!valueItem) {
-            valueItem = new QTableWidgetItem;
-            ui->sensorsTableWidget->setItem(row, 2, valueItem);
-        }
+    const int row = rowIt.value();
+    QTableWidgetItem *valueItem = ui->sensorsTableWidget->item(row, 2);
+    if (!valueItem) {
+        valueItem = new QTableWidgetItem;
+        ui->sensorsTableWidget->setItem(row, 2, valueItem);
+    }
 
-        if (auto* val16 = std::get_if<quint16>(&value)) {
-            valueItem->setText(QString::number(*val16));
-            valueItem->setData(Qt::UserRole, QVariant::fromValue(*val16));
-        } else if (auto* val32 = std::get_if<quint32>(&value)) {
-            valueItem->setText(QString::number(*val32));
-            valueItem->setData(Qt::UserRole, QVariant::fromValue(*val32));
-        } else if (auto* fValue = std::get_if<float>(&value)) {
-            valueItem->setText(QString::number(*fValue));
-            valueItem->setData(Qt::UserRole, QVariant::fromValue(*fValue));
-        }
+    if (auto* val16 = std::get_if<quint16>(&value)) {
+        valueItem->setText(QString::number(*val16));
+        valueItem->setData(Qt::UserRole, QVariant::fromValue(*val16));
+    } else if (auto* val32 = std::get_if<quint32>(&value)) {
+        valueItem->setText(QString::number(*val32));
+        valueItem->setData(Qt::UserRole, QVariant::fromValue(*val32));
+    } else if (auto* fValue = std::get_if<float>(&value)) {
+        valueItem->setText(QString::number(*fValue));
+        valueItem->setData(Qt::UserRole, QVariant::fromValue(*fValue));
+    }
 }
 
 void SensorsTableForm::setupTable()
@@ -176,7 +176,7 @@ void SensorsTableForm::requestAllValues() const
                                       }
                                       client->readHoldingRegisters(address,
                                                                    address == SensorsTableAddress::BoardOperatingMode ||
-                                                                           address == SensorsTableAddress::LaserOperatingMode ? 1 : 2);
+                                                                    address == SensorsTableAddress::LaserOperatingMode ? 1 : 2);
                                   },
                                   Qt::QueuedConnection);
     }

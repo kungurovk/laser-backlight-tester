@@ -110,6 +110,11 @@ void ModbusClient::readHoldingRegisters(int startAddress, quint16 numberOfEntrie
         return;
     }
 
+    if (m_client->state() != QModbusDevice::ConnectedState) {
+        handleError(tr("Unable to read holding registers: device is not connected."));
+        return;
+    }
+
     if (auto reply = m_client->sendReadRequest(QModbusDataUnit(QModbusDataUnit::HoldingRegisters,
                                                                startAddress, numberOfEntries),
                                                serverAddress)) {
@@ -134,6 +139,11 @@ void ModbusClient::writeMultipleRegisters(int startAddress, const QVector<quint1
 {
     if (!m_client) {
         handleError(tr("Unable to write registers: Modbus client is unavailable."));
+        return;
+    }
+
+    if (m_client->state() != QModbusDevice::ConnectedState) {
+        handleError(tr("Unable to write registers: device is not connected."));
         return;
     }
 
@@ -168,6 +178,7 @@ void ModbusClient::handleReplyFinished(QModbusReply *reply, bool isReadOperation
             for (uint i = 0; i < unit.valueCount(); ++i) {
                 values[static_cast<int>(i)] = unit.value(i);
             }
+            qDebug() << unit.startAddress() << values;
             emit readCompleted(unit.startAddress(), values);
         } else {
             const QModbusDataUnit unit = reply->result();
@@ -177,6 +188,14 @@ void ModbusClient::handleReplyFinished(QModbusReply *reply, bool isReadOperation
         handleError(tr("Modbus reply protocol error: %1 (exception code: 0x%2)")
                         .arg(reply->errorString())
                         .arg(reply->rawResult().exceptionCode(), 0, 16),
+                    reply);
+    } else if (reply->error() == QModbusDevice::ReplyAbortedError) {
+        // Специальная обработка ошибки закрытия соединения
+        QString operation = isReadOperation ? tr("read") : tr("write");
+        handleError(tr("Modbus %1 operation aborted: connection was closed during request. "
+                       "The device may have disconnected or the connection timed out. "
+                       "Please check the connection and try again.")
+                        .arg(operation),
                     reply);
     } else {
         handleError(tr("Modbus reply error: %1").arg(reply->errorString()), reply);

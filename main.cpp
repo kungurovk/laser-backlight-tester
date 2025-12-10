@@ -8,6 +8,7 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     QCoreApplication::setApplicationName("Laser Backlight Tester");
+    qRegisterMetaType<QVector<quint16>>("QVector<quint16>");
     Controller c;
     DockManager w;
     QObject::connect(&w, &DockManager::modeRequested, &c, &Controller::sendMessageForMode);

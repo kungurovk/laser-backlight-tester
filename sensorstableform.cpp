@@ -3,6 +3,9 @@
 
 #include "modbusclient.h"
 #include "enums.h"
+#include "endianutils.h"
+
+#include <cstring>
 
 namespace {
 QString makeAddressString(int address)
@@ -53,11 +56,28 @@ void SensorsTableForm::setModbusClient(ModbusClient *client)
 
 void SensorsTableForm::handleReadCompleted(int startAddress, const QVector<quint16> &values)
 {
-    for (int i = 0; i < values.size(); ++i) {
-        const int address = startAddress + i;
-        const auto rowIt = m_addressToRow.constFind(address);
+    std::variant<quint16, quint32, float> value;
+
+    if (startAddress == SensorsTableAddress::BoardOperatingMode ||
+        startAddress == SensorsTableAddress::LaserOperatingMode)
+    {
+        value = toBigEndian(values.first());
+    }
+    else if (startAddress == SensorsTableAddress::LaserWorkTime)
+    {
+        value = (quint32(toBigEndian(values.last())) << 16) | toBigEndian(values.first());
+    }
+    else
+    {
+        quint32 val32 = (quint32(toBigEndian(values.last())) << 16) | toBigEndian(values.first());
+        float fValue = 0.f;
+        std::memcpy(&fValue, &val32, sizeof(fValue));
+        value = fValue;
+    }
+
+        const auto rowIt = m_addressToRow.constFind(startAddress);
         if (rowIt == m_addressToRow.constEnd()) {
-            continue;
+            return;
         }
 
         const int row = rowIt.value();
@@ -67,10 +87,16 @@ void SensorsTableForm::handleReadCompleted(int startAddress, const QVector<quint
             ui->sensorsTableWidget->setItem(row, 2, valueItem);
         }
 
-        const quint16 value = values.at(i);
-        valueItem->setText(QString::number(value));
-        valueItem->setData(Qt::UserRole, QVariant::fromValue(value));
-    }
+        if (auto* val16 = std::get_if<quint16>(&value)) {
+            valueItem->setText(QString::number(*val16));
+            valueItem->setData(Qt::UserRole, QVariant::fromValue(*val16));
+        } else if (auto* val32 = std::get_if<quint32>(&value)) {
+            valueItem->setText(QString::number(*val32));
+            valueItem->setData(Qt::UserRole, QVariant::fromValue(*val32));
+        } else if (auto* fValue = std::get_if<float>(&value)) {
+            valueItem->setText(QString::number(*fValue));
+            valueItem->setData(Qt::UserRole, QVariant::fromValue(*fValue));
+        }
 }
 
 void SensorsTableForm::setupTable()
@@ -148,7 +174,9 @@ void SensorsTableForm::requestAllValues() const
                                       if (!client) {
                                           return;
                                       }
-                                      client->readHoldingRegisters(address, 1);
+                                      client->readHoldingRegisters(address,
+                                                                   address == SensorsTableAddress::BoardOperatingMode ||
+                                                                           address == SensorsTableAddress::LaserOperatingMode ? 1 : 2);
                                   },
                                   Qt::QueuedConnection);
     }

@@ -27,7 +27,8 @@ Controller::Controller(QObject *parent)
 
     // qDebug() << toLittleEndian(Mode::Work);
     // qDebug() << toBigEndian((short)0x0400);
-    emit connectToTcpPort("172.16.5.101", 502);
+    emit connectToTcpPort("127.0.0.1", 502);
+    // emit connectToTcpPort("172.16.5.101", 502);
 }
 
 Controller::~Controller()

@@ -46,6 +46,7 @@ else()
         add_executable(laser-backlight-tester
             ${PROJECT_SOURCES}
             sensorstableform.h sensorstableform.cpp sensorstableform.ui
+            limitandtargetvaluesform.h limitandtargetvaluesform.cpp limitandtargetvaluesform.ui
         )
     endif()
 endif()

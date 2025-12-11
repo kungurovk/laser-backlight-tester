@@ -30,9 +30,11 @@ private slots:
     void addSensorTableWidget();
     void addBlockTableWidget();
     void addModeControlWidget();
+    void addValuesWidget();
     void toggleSensorsTable(bool on);
     void toggleBlockTable(bool on);
     void toggleModeControl(bool on);
+    void toggleValueTable(bool on);
     void toggleDockTitles(bool show);
     void saveLayout();
     void restoreLayout();
@@ -60,6 +62,7 @@ private:
     QAction *m_actAddSensorTable = nullptr;
     QAction *m_actAddBlockTable = nullptr;
     QAction *m_actAddModeControl = nullptr;
+    QAction *m_actAddValuesTable = nullptr;
     QAction *m_actShowTitles = nullptr;
     QAction *m_actSaveLayout = nullptr;
     QAction *m_actRestoreLayout = nullptr;

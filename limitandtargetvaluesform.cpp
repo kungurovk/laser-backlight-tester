@@ -5,6 +5,8 @@
 #include "enums.h"
 #include "endianutils.h"
 
+#include <cstring>
+
 namespace {
 QString makeAddressString(int address)
 {
@@ -54,24 +56,24 @@ void LimitAndTargetValuesForm::setModbusClient(ModbusClient *client)
 
 void LimitAndTargetValuesForm::handleReadCompleted(int startAddress, const QVector<quint16> &values)
 {
-    for (int i = 0; i < values.size(); ++i) {
-        const int address = startAddress + i;
-        const auto rowIt = m_addressToRow.constFind(address);
-        if (rowIt == m_addressToRow.constEnd()) {
-            continue;
-        }
+    quint32 val32 = (quint32(toBigEndian(values.last())) << 16) | toBigEndian(values.first());
+    float fValue = 0.f;
+    std::memcpy(&fValue, &val32, sizeof(fValue));
 
-        const int row = rowIt.value();
-        QTableWidgetItem *valueItem = ui->limitAndTargetTableWidget->item(row, 2);
-        if (!valueItem) {
-            valueItem = new QTableWidgetItem;
-            ui->limitAndTargetTableWidget->setItem(row, 2, valueItem);
-        }
-
-        const quint16 value = values.at(i);
-        valueItem->setText(QString::number(value));
-        valueItem->setData(Qt::UserRole, QVariant::fromValue(value));
+    const auto rowIt = m_addressToRow.constFind(startAddress);
+    if (rowIt == m_addressToRow.constEnd()) {
+        return;
     }
+
+    const int row = rowIt.value();
+    QTableWidgetItem *valueItem = ui->limitAndTargetTableWidget->item(row, 2);
+    if (!valueItem) {
+        valueItem = new QTableWidgetItem;
+        ui->limitAndTargetTableWidget->setItem(row, 2, valueItem);
+    }
+
+    valueItem->setText(QString::number(fValue));
+    valueItem->setData(Qt::UserRole, QVariant::fromValue(fValue));
 }
 
 void LimitAndTargetValuesForm::setupTable()

@@ -35,7 +35,7 @@ ModbusClient::ModbusClient(QObject *parent)
         emit errorOccurred(tr("Modbus client error: %1").arg(m_client->errorString()));
     });
 
-    m_dispatchTimer->setInterval(3'000);
+    m_dispatchTimer->setInterval(1'000);
     m_dispatchTimer->setSingleShot(false);
     connect(m_dispatchTimer, &QTimer::timeout, this, [this]() {
         dispatchQueuedMessages();

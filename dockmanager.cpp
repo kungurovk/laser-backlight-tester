@@ -2,6 +2,7 @@
 #include "modecontrolform.h"
 #include "blocktableform.h"
 #include "sensorstableform.h"
+#include "limitandtargetvaluesform.h"
 #include "modbusclient.h"
 
 #include <QDockWidget>
@@ -18,6 +19,7 @@
 #include <QApplication>
 #include <QVariant>
 #include <QtMath>
+#include <QLayout>
 
 static QString settingsOrg() { return QStringLiteral("Lassard"); }
 static QString settingsApp() { return QStringLiteral("Laser Backlight Tester"); }
@@ -41,6 +43,7 @@ DockManager::DockManager(QWidget *parent)
         addModeControlWidget();
         addSensorTableWidget();
         addBlockTableWidget();
+        addValuesWidget();
     }
 }
 
@@ -82,6 +85,10 @@ void DockManager::createActions()
     m_actAddModeControl->setCheckable(true);
     connect(m_actAddModeControl, &QAction::toggled, this, &DockManager::toggleModeControl);
 
+    m_actAddValuesTable = new QAction(tr("Предельные и целевые значения"), this);
+    m_actAddValuesTable->setCheckable(true);
+    connect(m_actAddValuesTable, &QAction::toggled, this, &DockManager::toggleValueTable);
+
     m_actShowTitles = new QAction(tr("Показывать заголовки"), this);
     m_actShowTitles->setCheckable(true);
     m_actShowTitles->setChecked(true);
@@ -116,9 +123,10 @@ void DockManager::createMenusAndToolbars()
     m_windowMenu->addAction(m_actAddModeControl);
     m_windowMenu->addAction(m_actAddSensorTable);
     m_windowMenu->addAction(m_actAddBlockTable);
+    m_windowMenu->addAction(m_actAddValuesTable);
     m_windowMenu->addSeparator();
-    m_windowMenu->addAction(m_actTile);
-    m_windowMenu->addAction(m_actCascade);
+    // m_windowMenu->addAction(m_actTile);
+    // m_windowMenu->addAction(m_actCascade);
     m_windowMenu->addSeparator();
     m_windowMenu->addAction(m_actCloseAll);
 
@@ -127,9 +135,12 @@ void DockManager::createMenusAndToolbars()
     m_mainToolbar->addAction(m_actAddModeControl);
     m_mainToolbar->addAction(m_actAddSensorTable);
     m_mainToolbar->addAction(m_actAddBlockTable);
+    m_mainToolbar->addAction(m_actAddValuesTable);
     m_mainToolbar->addSeparator();
-    m_mainToolbar->addAction(m_actTile);
-    m_mainToolbar->addAction(m_actCascade);
+    // m_mainToolbar->addAction(m_actTile);
+    // m_mainToolbar->addAction(m_actCascade);
+    m_mainToolbar->layout()->setSpacing(5);
+
 }
 
 QDockWidget* DockManager::createDockFor(QWidget *content, const QString &title)
@@ -180,6 +191,14 @@ void DockManager::addModeControlWidget()
     updateActionChecks();
 }
 
+void DockManager::addValuesWidget()
+{
+    auto *valuesForm = new LimitAndTargetValuesForm(this);
+    auto *dock = createDockFor(valuesForm, "Предельные и целевые значения");
+    dock->show();
+    updateActionChecks();
+}
+
 void DockManager::connectDockSignals(QDockWidget *dock)
 {
     if (!dock) return;
@@ -192,6 +211,7 @@ void DockManager::updateActionChecks()
     bool anySensorsVisible = false;
     bool anyBlocksVisible = false;
     bool anyModeVisible = false;
+    bool anyValuesVisible = false;
     const auto docks = findChildren<QDockWidget*>();
     for (auto *dock : docks) {
         if (!dock->isVisible()) continue;
@@ -199,10 +219,12 @@ void DockManager::updateActionChecks()
         if (qobject_cast<SensorsTableForm*>(w)) anySensorsVisible = true;
         else if (qobject_cast<BlockTableForm*>(w)) anyBlocksVisible = true;
         else if (qobject_cast<ModeControlForm*>(w)) anyModeVisible = true;
+        else if (qobject_cast<LimitAndTargetValuesForm*>(w)) anyValuesVisible = true;
     }
     if (m_actAddSensorTable) m_actAddSensorTable->blockSignals(true), m_actAddSensorTable->setChecked(anySensorsVisible), m_actAddSensorTable->blockSignals(false);
     if (m_actAddBlockTable) m_actAddBlockTable->blockSignals(true), m_actAddBlockTable->setChecked(anyBlocksVisible), m_actAddBlockTable->blockSignals(false);
     if (m_actAddModeControl) m_actAddModeControl->blockSignals(true), m_actAddModeControl->setChecked(anyModeVisible), m_actAddModeControl->blockSignals(false);
+    if (m_actAddValuesTable) m_actAddValuesTable->blockSignals(true), m_actAddValuesTable->setChecked(anyValuesVisible), m_actAddValuesTable->blockSignals(false);
 }
 
 void DockManager::toggleSensorsTable(bool on)
@@ -244,6 +266,20 @@ void DockManager::toggleModeControl(bool on)
         }
     }
     if (on && !found) addModeControlWidget();
+    updateActionChecks();
+}
+
+void DockManager::toggleValueTable(bool on)
+{
+    bool found = false;
+    const auto docks = findChildren<QDockWidget*>();
+    for (auto *dock : docks) {
+        if (qobject_cast<LimitAndTargetValuesForm*>(dock->widget())) {
+            found = true;
+            if (on) dock->show(); else dock->close();
+        }
+    }
+    if (on && !found) addValuesWidget();
     updateActionChecks();
 }
 void DockManager::toggleDockTitles(bool show)
@@ -314,6 +350,7 @@ QString DockManager::detectDockType(QWidget *content) const
     if (qobject_cast<SensorsTableForm*>(content)) return QStringLiteral("sensorsTableForm");
     if (qobject_cast<BlockTableForm*>(content)) return QStringLiteral("blockTableForm");
     if (qobject_cast<ModeControlForm*>(content)) return QStringLiteral("modeControlForm");
+    if (qobject_cast<LimitAndTargetValuesForm*>(content)) return QStringLiteral("valuesForm");
     return QStringLiteral("unknown");
 }
 
@@ -331,6 +368,9 @@ QWidget* DockManager::createWidgetFromType(const QString &typeName, const QVaria
         auto *modeControlForm = new ModeControlForm;
         connect(modeControlForm, &ModeControlForm::modeRequested, this, &DockManager::modeRequested);
         return modeControlForm;
+    } else if (typeName == QLatin1String("valuesForm")) {
+        auto *valuesForm = new LimitAndTargetValuesForm;
+        return valuesForm;
     }
     auto *fallback = new QLabel(tr("Неизвестный тип: %1").arg(typeName), this);
     fallback->setAlignment(Qt::AlignCenter);

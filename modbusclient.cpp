@@ -16,11 +16,14 @@ QLoggingCategory lcModbusClient("modbus.client");
 ModbusClient::ModbusClient(QObject *parent)
     : QObject(parent)
     , m_client(new QModbusTcpClient(this))
+    , m_dispatchTimer(new QTimer(this))
 {
     connect(m_client, &QModbusTcpClient::stateChanged, this, [this](QModbusDevice::State state) {
         if (state == QModbusDevice::ConnectedState) {
             emit connectionStateChanged(true);
+            startDispatchTimerIfNeeded();
         } else if (state == QModbusDevice::UnconnectedState) {
+            stopDispatching();
             emit connectionStateChanged(false);
         }
     });
@@ -32,14 +35,10 @@ ModbusClient::ModbusClient(QObject *parent)
         emit errorOccurred(tr("Modbus client error: %1").arg(m_client->errorString()));
     });
 
-    // test
-    QTimer::singleShot(1000, [this](){
-        // emit readCompleted(0x11e, {0x0500, 0x0006}); //25-26 = 3
-        // emit readCompleted(0x11e, {0x0500, 0x0004}); //25-26 = 2
-        // emit readCompleted(0x120, {0x00ff, 0x0000});
-        // emit readCompleted(0x122, {0x0500});
-
-        // emit readCompleted(0x101, {0x0500});
+    m_dispatchTimer->setInterval(3'000);
+    m_dispatchTimer->setSingleShot(false);
+    connect(m_dispatchTimer, &QTimer::timeout, this, [this]() {
+        dispatchQueuedMessages();
     });
 }
 
@@ -110,24 +109,8 @@ void ModbusClient::readHoldingRegisters(int startAddress, quint16 numberOfEntrie
         return;
     }
 
-    if (m_client->state() != QModbusDevice::ConnectedState) {
-        handleError(tr("Unable to read holding registers: device is not connected."));
-        return;
-    }
-
-    if (auto reply = m_client->sendReadRequest(QModbusDataUnit(QModbusDataUnit::HoldingRegisters,
-                                                               startAddress, numberOfEntries),
-                                               serverAddress)) {
-        if (!reply->isFinished()) {
-            connect(reply, &QModbusReply::finished, this, [this, reply]() {
-                handleReplyFinished(reply, true);
-            });
-        } else {
-            handleReplyFinished(reply, true);
-        }
-    } else {
-        handleError(tr("Failed to send read request: %1").arg(m_client->errorString()));
-    }
+    enqueueMessage(startAddress, numberOfEntries, {}, serverAddress, true);
+    startDispatchTimerIfNeeded();
 }
 
 void ModbusClient::writeSingleRegister(int address, quint16 value, int serverAddress)
@@ -142,27 +125,8 @@ void ModbusClient::writeMultipleRegisters(int startAddress, const QVector<quint1
         return;
     }
 
-    if (m_client->state() != QModbusDevice::ConnectedState) {
-        handleError(tr("Unable to write registers: device is not connected."));
-        return;
-    }
-
-    QModbusDataUnit dataUnit(QModbusDataUnit::HoldingRegisters, startAddress, values.size());
-    for (int i = 0; i < values.size(); ++i) {
-        dataUnit.setValue(i, values.at(i));
-    }
-
-    if (auto reply = m_client->sendWriteRequest(dataUnit, serverAddress)) {
-        if (!reply->isFinished()) {
-            connect(reply, &QModbusReply::finished, this, [this, reply]() {
-                handleReplyFinished(reply, false);
-            });
-        } else {
-            handleReplyFinished(reply, false);
-        }
-    } else {
-        handleError(tr("Failed to send write request: %1").arg(m_client->errorString()));
-    }
+    enqueueMessage(startAddress, static_cast<quint16>(values.size()), values, serverAddress, false);
+    startDispatchTimerIfNeeded();
 }
 
 void ModbusClient::handleReplyFinished(QModbusReply *reply, bool isReadOperation)
@@ -213,5 +177,125 @@ void ModbusClient::handleError(const QString &context, QModbusReply *reply)
 
     qCWarning(lcModbusClient) << detailedContext;
     emit errorOccurred(detailedContext);
+}
+
+void ModbusClient::enqueueMessage(int address,
+                                  quint16 numberOfEntries,
+                                  const QVector<quint16> &values,
+                                  int serverAddress,
+                                  bool isRead)
+{
+    QueuedMessage message;
+    message.isRead = isRead;
+    message.numberOfEntries = numberOfEntries;
+    message.values = values;
+    message.serverAddress = serverAddress;
+
+    if (!m_messageQueue.contains(address)) {
+        m_messageOrder.append(address);
+    }
+    m_messageQueue.insert(address, message);
+}
+
+void ModbusClient::dispatchQueuedMessages()
+{
+    if (m_isDispatching || !isConnected() || m_messageQueue.isEmpty()) {
+        return;
+    }
+
+    m_pendingDispatch = m_messageOrder;
+    m_isDispatching = true;
+    sendNextQueuedMessage();
+}
+
+void ModbusClient::sendNextQueuedMessage()
+{
+    if (!isConnected()) {
+        m_isDispatching = false;
+        return;
+    }
+
+    if (m_pendingDispatch.isEmpty()) {
+        m_messageQueue.clear();
+        m_messageOrder.clear();
+        m_isDispatching = false;
+        return;
+    }
+
+    const int address = m_pendingDispatch.takeFirst();
+    const QueuedMessage message = m_messageQueue.value(address);
+
+    if (message.isRead) {
+        sendReadRequest(address, message.numberOfEntries, message.serverAddress);
+    } else {
+        sendWriteRequest(address, message.values, message.serverAddress);
+    }
+
+    QTimer::singleShot(50, this, [this]() {
+        sendNextQueuedMessage();
+    });
+}
+
+void ModbusClient::sendReadRequest(int startAddress, quint16 numberOfEntries, int serverAddress)
+{
+    if (!m_client || m_client->state() != QModbusDevice::ConnectedState) {
+        return;
+    }
+
+    if (auto reply = m_client->sendReadRequest(
+            QModbusDataUnit(QModbusDataUnit::HoldingRegisters, startAddress, numberOfEntries),
+            serverAddress)) {
+        if (!reply->isFinished()) {
+            connect(reply, &QModbusReply::finished, this, [this, reply]() {
+                handleReplyFinished(reply, true);
+            });
+        } else {
+            handleReplyFinished(reply, true);
+        }
+    } else {
+        handleError(tr("Failed to send read request: %1").arg(m_client->errorString()));
+    }
+}
+
+void ModbusClient::sendWriteRequest(int startAddress,
+                                    const QVector<quint16> &values,
+                                    int serverAddress)
+{
+    if (!m_client || m_client->state() != QModbusDevice::ConnectedState) {
+        return;
+    }
+
+    QModbusDataUnit dataUnit(QModbusDataUnit::HoldingRegisters, startAddress, values.size());
+    for (int i = 0; i < values.size(); ++i) {
+        dataUnit.setValue(i, values.at(i));
+    }
+
+    if (auto reply = m_client->sendWriteRequest(dataUnit, serverAddress)) {
+        if (!reply->isFinished()) {
+            connect(reply, &QModbusReply::finished, this, [this, reply]() {
+                handleReplyFinished(reply, false);
+            });
+        } else {
+            handleReplyFinished(reply, false);
+        }
+    } else {
+        handleError(tr("Failed to send write request: %1").arg(m_client->errorString()));
+    }
+}
+
+void ModbusClient::startDispatchTimerIfNeeded()
+{
+    if (isConnected() && m_dispatchTimer && !m_dispatchTimer->isActive()) {
+        m_dispatchTimer->start();
+    }
+}
+
+void ModbusClient::stopDispatching()
+{
+    if (m_dispatchTimer) {
+        m_dispatchTimer->stop();
+    }
+    m_isDispatching = false;
+    m_pendingDispatch.clear();
 }
 

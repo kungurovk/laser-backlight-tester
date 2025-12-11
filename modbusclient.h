@@ -2,9 +2,12 @@
 #pragma once
 
 #include <QObject>
+#include <QHash>
+#include <QList>
 #include <QPointer>
 #include <QString>
 #include <QVector>
+#include <QTimer>
 
 class QModbusReply;
 class QModbusTcpClient;
@@ -52,10 +55,36 @@ private:
     void handleReplyFinished(QModbusReply *reply, bool isReadOperation);
     void handleError(const QString &context, QModbusReply *reply = nullptr);
 
+    void enqueueMessage(int address,
+                        quint16 numberOfEntries,
+                        const QVector<quint16> &values,
+                        int serverAddress,
+                        bool isRead);
+    void dispatchQueuedMessages();
+    void sendNextQueuedMessage();
+    void sendReadRequest(int startAddress, quint16 numberOfEntries, int serverAddress);
+    void sendWriteRequest(int startAddress, const QVector<quint16> &values, int serverAddress);
+    void startDispatchTimerIfNeeded();
+    void stopDispatching();
+
+    struct QueuedMessage
+    {
+        bool isRead = true;
+        quint16 numberOfEntries = 0;
+        QVector<quint16> values;
+        int serverAddress = 1;
+    };
+
     QString m_host;
     quint16 m_port = 502;
     int m_timeoutMs = 1000;
 
     QPointer<QModbusTcpClient> m_client;
+
+    QHash<int, QueuedMessage> m_messageQueue;
+    QList<int> m_messageOrder;
+    QList<int> m_pendingDispatch;
+    bool m_isDispatching = false;
+    QTimer *m_dispatchTimer = nullptr;
 };
 

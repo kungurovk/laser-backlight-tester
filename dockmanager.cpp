@@ -3,6 +3,7 @@
 #include "blocktableform.h"
 #include "sensorstableform.h"
 #include "limitandtargetvaluesform.h"
+#include "generatorsetterform.h"
 #include "modbusclient.h"
 
 #include <QDockWidget>
@@ -44,6 +45,7 @@ DockManager::DockManager(QWidget *parent)
         addSensorTableWidget();
         addBlockTableWidget();
         addValuesWidget();
+        addGeneratorWidget();
     }
 }
 
@@ -89,6 +91,10 @@ void DockManager::createActions()
     m_actAddValuesTable->setCheckable(true);
     connect(m_actAddValuesTable, &QAction::toggled, this, &DockManager::toggleValueTable);
 
+    m_actAddGeneratorTable = new QAction(tr("Задающий генератор"), this);
+    m_actAddGeneratorTable->setCheckable(true);
+    connect(m_actAddGeneratorTable, &QAction::toggled, this, &DockManager::toggleGeneratorTable);
+
     m_actShowTitles = new QAction(tr("Показывать заголовки"), this);
     m_actShowTitles->setCheckable(true);
     m_actShowTitles->setChecked(true);
@@ -124,6 +130,7 @@ void DockManager::createMenusAndToolbars()
     m_windowMenu->addAction(m_actAddSensorTable);
     m_windowMenu->addAction(m_actAddBlockTable);
     m_windowMenu->addAction(m_actAddValuesTable);
+    m_windowMenu->addAction(m_actAddGeneratorTable);
     m_windowMenu->addSeparator();
     // m_windowMenu->addAction(m_actTile);
     // m_windowMenu->addAction(m_actCascade);
@@ -136,6 +143,7 @@ void DockManager::createMenusAndToolbars()
     m_mainToolbar->addAction(m_actAddSensorTable);
     m_mainToolbar->addAction(m_actAddBlockTable);
     m_mainToolbar->addAction(m_actAddValuesTable);
+    m_mainToolbar->addAction(m_actAddGeneratorTable);
     m_mainToolbar->addSeparator();
     // m_mainToolbar->addAction(m_actTile);
     // m_mainToolbar->addAction(m_actCascade);
@@ -199,6 +207,14 @@ void DockManager::addValuesWidget()
     updateActionChecks();
 }
 
+void DockManager::addGeneratorWidget()
+{
+    auto *generatorForm = new GeneratorSetterForm(this);
+    auto *dock = createDockFor(generatorForm, "Задающий генератор");
+    dock->show();
+    updateActionChecks();
+}
+
 void DockManager::connectDockSignals(QDockWidget *dock)
 {
     if (!dock) return;
@@ -212,6 +228,7 @@ void DockManager::updateActionChecks()
     bool anyBlocksVisible = false;
     bool anyModeVisible = false;
     bool anyValuesVisible = false;
+    bool anyGeneratorVisible = false;
     const auto docks = findChildren<QDockWidget*>();
     for (auto *dock : docks) {
         if (!dock->isVisible()) continue;
@@ -220,11 +237,13 @@ void DockManager::updateActionChecks()
         else if (qobject_cast<BlockTableForm*>(w)) anyBlocksVisible = true;
         else if (qobject_cast<ModeControlForm*>(w)) anyModeVisible = true;
         else if (qobject_cast<LimitAndTargetValuesForm*>(w)) anyValuesVisible = true;
+        else if (qobject_cast<GeneratorSetterForm*>(w)) anyGeneratorVisible = true;
     }
     if (m_actAddSensorTable) m_actAddSensorTable->blockSignals(true), m_actAddSensorTable->setChecked(anySensorsVisible), m_actAddSensorTable->blockSignals(false);
     if (m_actAddBlockTable) m_actAddBlockTable->blockSignals(true), m_actAddBlockTable->setChecked(anyBlocksVisible), m_actAddBlockTable->blockSignals(false);
     if (m_actAddModeControl) m_actAddModeControl->blockSignals(true), m_actAddModeControl->setChecked(anyModeVisible), m_actAddModeControl->blockSignals(false);
     if (m_actAddValuesTable) m_actAddValuesTable->blockSignals(true), m_actAddValuesTable->setChecked(anyValuesVisible), m_actAddValuesTable->blockSignals(false);
+    if (m_actAddGeneratorTable) m_actAddGeneratorTable->blockSignals(true), m_actAddGeneratorTable->setChecked(anyGeneratorVisible), m_actAddGeneratorTable->blockSignals(false);
 }
 
 void DockManager::toggleSensorsTable(bool on)
@@ -280,6 +299,20 @@ void DockManager::toggleValueTable(bool on)
         }
     }
     if (on && !found) addValuesWidget();
+    updateActionChecks();
+}
+
+void DockManager::toggleGeneratorTable(bool on)
+{
+    bool found = false;
+    const auto docks = findChildren<QDockWidget*>();
+    for (auto *dock : docks) {
+        if (qobject_cast<GeneratorSetterForm*>(dock->widget())) {
+            found = true;
+            if (on) dock->show(); else dock->close();
+        }
+    }
+    if (on && !found) addGeneratorWidget();
     updateActionChecks();
 }
 void DockManager::toggleDockTitles(bool show)
@@ -351,6 +384,7 @@ QString DockManager::detectDockType(QWidget *content) const
     if (qobject_cast<BlockTableForm*>(content)) return QStringLiteral("blockTableForm");
     if (qobject_cast<ModeControlForm*>(content)) return QStringLiteral("modeControlForm");
     if (qobject_cast<LimitAndTargetValuesForm*>(content)) return QStringLiteral("valuesForm");
+    if (qobject_cast<GeneratorSetterForm*>(content)) return QStringLiteral("generatorForm");
     return QStringLiteral("unknown");
 }
 
@@ -370,6 +404,9 @@ QWidget* DockManager::createWidgetFromType(const QString &typeName, const QVaria
         return modeControlForm;
     } else if (typeName == QLatin1String("valuesForm")) {
         auto *valuesForm = new LimitAndTargetValuesForm;
+        return valuesForm;
+    } else if (typeName == QLatin1String("generatorForm")) {
+        auto *valuesForm = new GeneratorSetterForm;
         return valuesForm;
     }
     auto *fallback = new QLabel(tr("Неизвестный тип: %1").arg(typeName), this);

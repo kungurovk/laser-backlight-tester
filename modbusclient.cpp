@@ -115,6 +115,7 @@ void ModbusClient::readHoldingRegisters(int startAddress, quint16 numberOfEntrie
 
 void ModbusClient::writeSingleRegister(int address, quint16 value, int serverAddress)
 {
+    qDebug() << address << value;
     writeMultipleRegisters(address, QVector<quint16>{value}, serverAddress);
 }
 

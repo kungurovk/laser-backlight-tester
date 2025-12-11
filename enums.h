@@ -15,7 +15,7 @@ enum ModeAddress
     Address = 0x00,
 };
 
-enum States
+enum States : unsigned short
 {
     On  = 0x01,
     Off = 0x00,

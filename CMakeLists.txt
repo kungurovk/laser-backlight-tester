@@ -47,6 +47,8 @@ else()
             ${PROJECT_SOURCES}
             sensorstableform.h sensorstableform.cpp sensorstableform.ui
             limitandtargetvaluesform.h limitandtargetvaluesform.cpp limitandtargetvaluesform.ui
+            generatorsetterform.h generatorsetterform.cpp generatorsetterform.ui
+            textbuttonform.h textbuttonform.cpp textbuttonform.ui
         )
     endif()
 endif()

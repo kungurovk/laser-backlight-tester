@@ -23,6 +23,8 @@ public:
 
 signals:
     void modeRequested(Mode mode);
+    void connectToTcpPort(const QString &host, quint16 port);
+    void disconnectFromTcp();
 
 protected:
     void closeEvent(QCloseEvent *event) override;
@@ -32,6 +34,7 @@ private slots:
     void addModeControlWidget();
     void addValuesWidget();
     void addGeneratorWidget();
+    void toggleConnect(bool on);
     void toggleSensorsTable(bool on);
     void toggleBlockTable(bool on);
     void toggleModeControl(bool on);
@@ -43,6 +46,8 @@ private slots:
     void tileDocks();
     void cascadeDocks();
     void closeAllDocks();
+    void onConnectionStateChanged(bool connected);
+
 private:
     void createUi();
     void createActions();
@@ -61,6 +66,7 @@ private:
     QMenu *m_viewMenu = nullptr;
     QMenu *m_windowMenu = nullptr;
     QToolBar *m_mainToolbar = nullptr;
+    QAction *m_actConnect = nullptr;
     QAction *m_actAddSensorTable = nullptr;
     QAction *m_actAddBlockTable = nullptr;
     QAction *m_actAddModeControl = nullptr;
@@ -74,6 +80,7 @@ private:
     QAction *m_actCloseAll = nullptr;
     int m_dockCounter = 0;
     ModbusClient *m_modbusClient = nullptr;
+    bool m_isConnected = false;
 };
 
 #endif // DOCKMANAGER_H

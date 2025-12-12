@@ -50,7 +50,7 @@ void SensorsTableForm::setModbusClient(ModbusClient *client)
     if (m_modbusClient) {
         connect(m_modbusClient, &ModbusClient::readCompleted,
                 this, &SensorsTableForm::handleReadCompleted);
-        requestAllValues();
+        // requestAllValues();
     }
 }
 

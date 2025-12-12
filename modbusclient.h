@@ -17,6 +17,8 @@ class ModbusBase
 {
 public:
     virtual void setModbusClient(ModbusClient *client) = 0;
+
+    virtual void requestAllValues() const = 0;
 };
 
 /**

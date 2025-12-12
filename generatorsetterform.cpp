@@ -51,7 +51,7 @@ void GeneratorSetterForm::setModbusClient(ModbusClient *client)
     if (m_modbusClient) {
         connect(m_modbusClient, &ModbusClient::readCompleted,
                 this, &GeneratorSetterForm::handleReadCompleted);
-        requestAllValues();
+        // requestAllValues();
     }
 }
 

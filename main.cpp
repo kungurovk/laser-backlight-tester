@@ -12,6 +12,8 @@ int main(int argc, char *argv[])
     Controller c;
     DockManager w;
     QObject::connect(&w, &DockManager::modeRequested, &c, &Controller::sendMessageForMode);
+    QObject::connect(&w, &DockManager::connectToTcpPort, &c, &Controller::connectToTcpPort);
+    QObject::connect(&w, &DockManager::disconnectFromTcp, &c, &Controller::disconnectFromTcp);
     w.setModbusClient(c.modbusClient());
     w.show();
     return a.exec();

@@ -21,6 +21,7 @@
 #include <QVariant>
 #include <QtMath>
 #include <QLayout>
+#include <QDebug>
 
 static QString settingsOrg() { return QStringLiteral("Lassard"); }
 static QString settingsApp() { return QStringLiteral("Laser Backlight Tester"); }
@@ -55,12 +56,23 @@ void DockManager::setModbusClient(ModbusClient *client)
         return;
     }
 
+    if (m_modbusClient) {
+        disconnect(m_modbusClient, nullptr, this, nullptr);
+    }
+
     m_modbusClient = client;
     const auto widgets = findChildren<QWidget*>();
     for (auto *widget : widgets) {
         if (auto *form = dynamic_cast<ModbusBase*>(widget)) {
             form->setModbusClient(m_modbusClient);
         }
+    }
+
+    if (m_modbusClient) {
+        connect(m_modbusClient, &ModbusClient::connectionStateChanged, this, &DockManager::onConnectionStateChanged);
+        onConnectionStateChanged(m_modbusClient->isConnected());
+    } else {
+        onConnectionStateChanged(false);
     }
 }
 
@@ -75,6 +87,10 @@ void DockManager::createUi()
 
 void DockManager::createActions()
 {
+    m_actConnect = new QAction(tr("Подключить"), this);
+    m_actConnect->setCheckable(false);
+    connect(m_actConnect, &QAction::triggered, this, &DockManager::toggleConnect);
+
     m_actAddSensorTable = new QAction(tr("Показания датчиков"), this);
     m_actAddSensorTable->setCheckable(true);
     connect(m_actAddSensorTable, &QAction::toggled, this, &DockManager::toggleSensorsTable);
@@ -139,6 +155,8 @@ void DockManager::createMenusAndToolbars()
 
     m_mainToolbar = addToolBar(tr("Главная"));
     m_mainToolbar->setObjectName(QStringLiteral("MainToolbar"));
+    m_mainToolbar->addAction(m_actConnect);
+    m_mainToolbar->addSeparator();
     m_mainToolbar->addAction(m_actAddModeControl);
     m_mainToolbar->addAction(m_actAddSensorTable);
     m_mainToolbar->addAction(m_actAddBlockTable);
@@ -184,7 +202,6 @@ void DockManager::addSensorTableWidget()
 void DockManager::addBlockTableWidget()
 {
     auto *block = new BlockTableForm(this);
-    block->setModbusClient(m_modbusClient);
     auto *dock = createDockFor(block, tr("Статусы блоков"));
     dock->show();
     updateActionChecks();
@@ -213,6 +230,38 @@ void DockManager::addGeneratorWidget()
     auto *dock = createDockFor(generatorForm, "Задающий генератор");
     dock->show();
     updateActionChecks();
+}
+
+void DockManager::toggleConnect(bool /*on*/)
+{
+    qDebug() << "toggleConnect";
+    if (m_isConnected) {
+        emit disconnectFromTcp();
+    } else {
+        emit connectToTcpPort("127.0.0.1", 502);
+        // emit connectToTcpPort("172.16.5.101", 502);
+    }
+}
+
+void DockManager::onConnectionStateChanged(bool connected)
+{
+    m_isConnected = connected;
+
+    if (m_actConnect) {
+        m_actConnect->setText(connected ? tr("Отключить") : tr("Подключить"));
+    }
+
+    statusBar()->showMessage(connected ? tr("Подключено") : tr("Отключено"), 3000);
+
+    if (connected)
+    {
+        const auto widgets = findChildren<QWidget*>();
+        for (auto *widget : widgets) {
+            if (auto *form = dynamic_cast<ModbusBase*>(widget)) {
+                form->requestAllValues();
+            }
+        }
+    }
 }
 
 void DockManager::connectDockSignals(QDockWidget *dock)
@@ -396,7 +445,6 @@ QWidget* DockManager::createWidgetFromType(const QString &typeName, const QVaria
         return w;
     } else if (typeName == QLatin1String("blockTableForm")) {
         auto *w = new BlockTableForm(this);
-        w->setModbusClient(m_modbusClient);
         return w;
     } else if (typeName == QLatin1String("modeControlForm")) {
         auto *modeControlForm = new ModeControlForm;

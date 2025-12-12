@@ -49,6 +49,7 @@ else()
             limitandtargetvaluesform.h limitandtargetvaluesform.cpp limitandtargetvaluesform.ui
             generatorsetterform.h generatorsetterform.cpp generatorsetterform.ui
             textbuttonform.h textbuttonform.cpp textbuttonform.ui
+            res.qrc
         )
     endif()
 endif()

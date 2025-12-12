@@ -168,3 +168,9 @@ void LimitAndTargetValuesForm::requestAllValues() const
                                   Qt::QueuedConnection);
     }
 }
+
+void LimitAndTargetValuesForm::on_pushButton_clicked()
+{
+    requestAllValues();
+}
+

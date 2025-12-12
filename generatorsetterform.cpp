@@ -114,6 +114,7 @@ void GeneratorSetterForm::sendState(int address, bool value)
                               },
                               Qt::QueuedConnection);
 
+    //!НЕ УСПЕВАЕТ ВКЛЮЧИТЬСЯ
     // QMetaObject::invokeMethod(m_modbusClient,
     //                           [client = m_modbusClient, address, value]() {
     //                               if (!client) {
@@ -206,3 +207,9 @@ void GeneratorSetterForm::requestAllValues() const
                                   Qt::QueuedConnection);
     }
 }
+
+void GeneratorSetterForm::on_pushButton_clicked()
+{
+    requestAllValues();
+}
+

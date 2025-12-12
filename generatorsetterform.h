@@ -25,6 +25,8 @@ private slots:
     void handleReadCompleted(int startAddress, const QVector<quint16> &values);
     void sendState(int address, bool value);
 
+    void on_pushButton_clicked();
+
 private:
     struct BlockEntry
     {

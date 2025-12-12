@@ -181,3 +181,9 @@ void SensorsTableForm::requestAllValues() const
                                   Qt::QueuedConnection);
     }
 }
+
+void SensorsTableForm::on_pushButton_clicked()
+{
+    requestAllValues();
+}
+

@@ -363,3 +363,9 @@ void BlockTableForm::requestAllValues() const
                                   Qt::QueuedConnection);
     }
 }
+
+void BlockTableForm::on_pushButton_clicked()
+{
+    requestAllValues();
+}
+

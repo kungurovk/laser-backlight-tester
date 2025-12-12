@@ -21,6 +21,8 @@
 #include <QVariant>
 #include <QtMath>
 #include <QLayout>
+#include <QComboBox>
+#include <QPushButton>
 #include <QDebug>
 
 static QString settingsOrg() { return QStringLiteral("Lassard"); }
@@ -30,6 +32,13 @@ DockManager::DockManager(QWidget *parent)
     : QMainWindow{parent}
 {
     // createUi();
+    m_requestAllTimer = new QTimer(this);
+    m_requestAllTimer->setSingleShot(false);
+    m_requestAllTimer->setTimerType(Qt::PreciseTimer);
+    connect(m_requestAllTimer, &QTimer::timeout, [this](){
+        requestAllValues();
+    });
+
     createActions();
     createMenusAndToolbars();
 
@@ -157,6 +166,23 @@ void DockManager::createMenusAndToolbars()
     m_mainToolbar->setObjectName(QStringLiteral("MainToolbar"));
     m_mainToolbar->addAction(m_actConnect);
     m_mainToolbar->addSeparator();
+
+    m_mainToolbar->addWidget(new QLabel("Период опроса (сек.)", this));
+    auto comboBox = new QComboBox(this);
+    comboBox->addItems({"1", "5", "10", "15", "30", "60"});
+    connect(comboBox, &QComboBox::currentTextChanged, [this](const QString &text){
+        m_requestAllTimer->setInterval(text.toUInt() * 1000);
+    });
+    comboBox->setCurrentText("5");
+    m_mainToolbar->addWidget(comboBox);
+    m_startStopButton = new QPushButton(this);
+    m_startStopButton->setFixedHeight(comboBox->height());
+    m_startStopButton->setFixedWidth(50);
+    startStopButton();
+    connect(m_startStopButton, &QPushButton::clicked, this, &DockManager::startStopButton);
+    m_mainToolbar->addWidget(m_startStopButton);
+
+    m_mainToolbar->addSeparator();
     m_mainToolbar->addAction(m_actAddModeControl);
     m_mainToolbar->addAction(m_actAddSensorTable);
     m_mainToolbar->addAction(m_actAddBlockTable);
@@ -255,13 +281,25 @@ void DockManager::onConnectionStateChanged(bool connected)
 
     if (connected)
     {
-        const auto widgets = findChildren<QWidget*>();
-        for (auto *widget : widgets) {
-            if (auto *form = dynamic_cast<ModbusBase*>(widget)) {
-                form->requestAllValues();
-            }
-        }
+        requestAllValues();
     }
+}
+
+void DockManager::startStopButton()
+{
+    if (!m_isStartedPool)
+    {
+        m_startStopButton->setIcon(QIcon("://icons/start-on.svg"));
+        m_startStopButton->setToolTip("Старт");
+        m_requestAllTimer->stop();
+    }
+    else
+    {
+        m_startStopButton->setIcon(QIcon("://icons/stop-on.svg"));
+        m_startStopButton->setToolTip("Стоп");
+        m_requestAllTimer->start();
+    }
+    m_isStartedPool = !m_isStartedPool;
 }
 
 void DockManager::connectDockSignals(QDockWidget *dock)
@@ -460,6 +498,16 @@ QWidget* DockManager::createWidgetFromType(const QString &typeName, const QVaria
     auto *fallback = new QLabel(tr("Неизвестный тип: %1").arg(typeName), this);
     fallback->setAlignment(Qt::AlignCenter);
     return fallback;
+}
+
+void DockManager::requestAllValues()
+{
+    const auto widgets = findChildren<QWidget*>();
+    for (auto *widget : widgets) {
+        if (auto *form = dynamic_cast<ModbusBase*>(widget)) {
+            form->requestAllValues();
+        }
+    }
 }
 
 void DockManager::saveLayout()

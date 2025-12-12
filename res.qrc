@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>icons/update.png</file>
+        <file>icons/start-on.svg</file>
+        <file>icons/stop-on.svg</file>
     </qresource>
 </RCC>

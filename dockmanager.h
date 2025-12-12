@@ -2,6 +2,7 @@
 #define DOCKMANAGER_H
 
 #include <QMainWindow>
+#include <qpushbutton.h>
 
 #include "enums.h"
 
@@ -47,6 +48,7 @@ private slots:
     void cascadeDocks();
     void closeAllDocks();
     void onConnectionStateChanged(bool connected);
+    void startStopButton();
 
 private:
     void createUi();
@@ -61,6 +63,8 @@ private:
     void loadDockContents(QSettings &settings);
     QString detectDockType(QWidget *content) const;
     QWidget* createWidgetFromType(const QString &typeName, const QVariant &payload);
+    void requestAllValues();
+
 private:
     QMenu *m_fileMenu = nullptr;
     QMenu *m_viewMenu = nullptr;
@@ -81,6 +85,9 @@ private:
     int m_dockCounter = 0;
     ModbusClient *m_modbusClient = nullptr;
     bool m_isConnected = false;
+    QTimer *m_requestAllTimer = nullptr;
+    bool m_isStartedPool = false;
+    QPushButton *m_startStopButton = nullptr;
 };
 
 #endif // DOCKMANAGER_H

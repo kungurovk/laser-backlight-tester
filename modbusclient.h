@@ -64,10 +64,12 @@ private:
                         bool isRead);
     void dispatchQueuedMessages();
     void sendNextQueuedMessage();
-    void sendReadRequest(int startAddress, quint16 numberOfEntries, int serverAddress);
-    void sendWriteRequest(int startAddress, const QVector<quint16> &values, int serverAddress);
+    QModbusReply *sendReadRequest(int startAddress, quint16 numberOfEntries, int serverAddress);
+    QModbusReply *sendWriteRequest(int startAddress, const QVector<quint16> &values, int serverAddress);
     void startDispatchTimerIfNeeded();
     void stopDispatching();
+    void onReplySettled();
+    void startReplyTimeout();
 
     struct QueuedMessage
     {
@@ -88,5 +90,7 @@ private:
     QList<int> m_pendingDispatch;
     bool m_isDispatching = false;
     QTimer *m_dispatchTimer = nullptr;
+    QTimer *m_replyTimeout = nullptr;
+    QPointer<QModbusReply> m_activeReply;
 };
 

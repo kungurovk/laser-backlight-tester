@@ -17,6 +17,7 @@ ModbusClient::ModbusClient(QObject *parent)
     : QObject(parent)
     , m_client(new QModbusTcpClient(this))
     , m_dispatchTimer(new QTimer(this))
+    , m_replyTimeout(new QTimer(this))
 {
     connect(m_client, &QModbusTcpClient::stateChanged, this, [this](QModbusDevice::State state) {
         if (state == QModbusDevice::ConnectedState) {
@@ -39,6 +40,17 @@ ModbusClient::ModbusClient(QObject *parent)
     m_dispatchTimer->setSingleShot(false);
     connect(m_dispatchTimer, &QTimer::timeout, this, [this]() {
         dispatchQueuedMessages();
+    });
+
+    m_replyTimeout->setSingleShot(true);
+    connect(m_replyTimeout, &QTimer::timeout, this, [this]() {
+        if (!m_activeReply) {
+            return;
+        }
+        handleError(tr("Modbus request timeout"), m_activeReply);
+        m_activeReply->deleteLater();
+        m_activeReply.clear();
+        onReplySettled();
     });
 }
 
@@ -143,7 +155,7 @@ void ModbusClient::handleReplyFinished(QModbusReply *reply, bool isReadOperation
             for (uint i = 0; i < unit.valueCount(); ++i) {
                 values[static_cast<int>(i)] = unit.value(i);
             }
-            qDebug() << unit.startAddress() << values;
+            // qDebug() << unit.startAddress() << values;
             emit readCompleted(unit.startAddress(), values);
         } else {
             const QModbusDataUnit unit = reply->result();
@@ -165,8 +177,6 @@ void ModbusClient::handleReplyFinished(QModbusReply *reply, bool isReadOperation
     } else {
         handleError(tr("Modbus reply error: %1").arg(reply->errorString()), reply);
     }
-
-    reply->deleteLater();
 }
 
 void ModbusClient::handleError(const QString &context, QModbusReply *reply)
@@ -216,6 +226,10 @@ void ModbusClient::sendNextQueuedMessage()
         return;
     }
 
+    if (m_activeReply) {
+        return;
+    }
+
     if (m_pendingDispatch.isEmpty()) {
         m_messageQueue.clear();
         m_messageOrder.clear();
@@ -226,44 +240,58 @@ void ModbusClient::sendNextQueuedMessage()
     const int address = m_pendingDispatch.takeFirst();
     const QueuedMessage message = m_messageQueue.value(address);
 
+    QModbusReply *reply = nullptr;
     if (message.isRead) {
-        sendReadRequest(address, message.numberOfEntries, message.serverAddress);
+        reply = sendReadRequest(address, message.numberOfEntries, message.serverAddress);
     } else {
-        sendWriteRequest(address, message.values, message.serverAddress);
+        reply = sendWriteRequest(address, message.values, message.serverAddress);
     }
 
-    QTimer::singleShot(50, this, [this]() {
-        sendNextQueuedMessage();
+    if (!reply) {
+        // Failed to send, move on to the next message to avoid blocking the queue.
+        QTimer::singleShot(0, this, [this]() {
+            sendNextQueuedMessage();
+        });
+        return;
+    }
+
+    m_activeReply = reply;
+
+    connect(reply, &QModbusReply::finished, this, [this, reply, isRead = message.isRead]() {
+        if (reply != m_activeReply) {
+            return;
+        }
+        handleReplyFinished(reply, isRead);
+        reply->deleteLater();
+        m_activeReply.clear();
+        onReplySettled();
     });
+
+    startReplyTimeout();
 }
 
-void ModbusClient::sendReadRequest(int startAddress, quint16 numberOfEntries, int serverAddress)
+QModbusReply *ModbusClient::sendReadRequest(int startAddress, quint16 numberOfEntries, int serverAddress)
 {
     if (!m_client || m_client->state() != QModbusDevice::ConnectedState) {
-        return;
+        return nullptr;
     }
 
     if (auto reply = m_client->sendReadRequest(
             QModbusDataUnit(QModbusDataUnit::HoldingRegisters, startAddress, numberOfEntries),
             serverAddress)) {
-        if (!reply->isFinished()) {
-            connect(reply, &QModbusReply::finished, this, [this, reply]() {
-                handleReplyFinished(reply, true);
-            });
-        } else {
-            handleReplyFinished(reply, true);
-        }
+        return reply;
     } else {
         handleError(tr("Failed to send read request: %1").arg(m_client->errorString()));
+        return nullptr;
     }
 }
 
-void ModbusClient::sendWriteRequest(int startAddress,
-                                    const QVector<quint16> &values,
-                                    int serverAddress)
+QModbusReply *ModbusClient::sendWriteRequest(int startAddress,
+                                            const QVector<quint16> &values,
+                                            int serverAddress)
 {
     if (!m_client || m_client->state() != QModbusDevice::ConnectedState) {
-        return;
+        return nullptr;
     }
 
     QModbusDataUnit dataUnit(QModbusDataUnit::HoldingRegisters, startAddress, values.size());
@@ -272,15 +300,10 @@ void ModbusClient::sendWriteRequest(int startAddress,
     }
 
     if (auto reply = m_client->sendWriteRequest(dataUnit, serverAddress)) {
-        if (!reply->isFinished()) {
-            connect(reply, &QModbusReply::finished, this, [this, reply]() {
-                handleReplyFinished(reply, false);
-            });
-        } else {
-            handleReplyFinished(reply, false);
-        }
+        return reply;
     } else {
         handleError(tr("Failed to send write request: %1").arg(m_client->errorString()));
+        return nullptr;
     }
 }
 
@@ -298,5 +321,24 @@ void ModbusClient::stopDispatching()
     }
     m_isDispatching = false;
     m_pendingDispatch.clear();
+}
+
+void ModbusClient::onReplySettled()
+{
+    if (m_replyTimeout) {
+        m_replyTimeout->stop();
+    }
+    QTimer::singleShot(0, this, [this]() {
+        sendNextQueuedMessage();
+    });
+}
+
+void ModbusClient::startReplyTimeout()
+{
+    if (!m_replyTimeout) {
+        return;
+    }
+    const int timeout = m_timeoutMs > 0 ? m_timeoutMs : 1000;
+    m_replyTimeout->start(timeout);
 }
 

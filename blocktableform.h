@@ -25,6 +25,11 @@ public:
 
     void setModbusClient(ModbusClient *client) override;
 
+    QList<int> getSplitterSizes();
+    void setSplitterSizes(const QList<int> &);
+
+    void requestAllValues() const override;
+
 private slots:
     void handleReadCompleted(int startAddress, const QVector<quint16> &values);
     void showDetails(int address);
@@ -54,7 +59,6 @@ private:
     void populateBlockStatusTable(QVariant value);
     void insertRow(const BlockEntry &entry);
     void insertRowBlockStatus(const BlockStatusEntry &entry);
-    void requestAllValues() const;
 
     Ui::BlockTableForm *ui;
     ModbusClient *m_modbusClient = nullptr;

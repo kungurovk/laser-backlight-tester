@@ -45,10 +45,8 @@ DockManager::DockManager(QWidget *parent)
     setDockOptions(QMainWindow::AllowTabbedDocks | QMainWindow::AnimatedDocks | QMainWindow::AllowNestedDocks | QMainWindow::GroupedDragging);
     setTabPosition(Qt::AllDockWidgetAreas, QTabWidget::North);
 
-    statusBar()->showMessage(tr("Ready"));
+    // statusBar()->showMessage(tr("Ready"));
 
-    // Try restore previous session
-    restoreLayout();
     if (findChildren<QDockWidget*>().isEmpty()) {
         // Fallback demo content if nothing restored
         addModeControlWidget();
@@ -57,6 +55,8 @@ DockManager::DockManager(QWidget *parent)
         addValuesWidget();
         addGeneratorWidget();
     }
+    // Try restore previous session
+    restoreLayout();
 }
 
 void DockManager::setModbusClient(ModbusClient *client)
@@ -96,10 +96,6 @@ void DockManager::createUi()
 
 void DockManager::createActions()
 {
-    m_actConnect = new QAction(tr("Подключить"), this);
-    m_actConnect->setCheckable(false);
-    connect(m_actConnect, &QAction::triggered, this, &DockManager::toggleConnect);
-
     m_actAddSensorTable = new QAction(tr("Показания датчиков"), this);
     m_actAddSensorTable->setCheckable(true);
     connect(m_actAddSensorTable, &QAction::toggled, this, &DockManager::toggleSensorsTable);
@@ -164,7 +160,9 @@ void DockManager::createMenusAndToolbars()
 
     m_mainToolbar = addToolBar(tr("Главная"));
     m_mainToolbar->setObjectName(QStringLiteral("MainToolbar"));
-    m_mainToolbar->addAction(m_actConnect);
+    m_buttonConnect = new QPushButton;
+    connect(m_buttonConnect, &QPushButton::clicked, this, &DockManager::toggleConnect);
+    m_mainToolbar->addWidget(m_buttonConnect);
     m_mainToolbar->addSeparator();
 
     m_mainToolbar->addWidget(new QLabel("Период опроса (сек.)", this));
@@ -264,8 +262,8 @@ void DockManager::toggleConnect(bool /*on*/)
     if (m_isConnected) {
         emit disconnectFromTcp();
     } else {
-        emit connectToTcpPort("127.0.0.1", 502);
-        // emit connectToTcpPort("172.16.5.101", 502);
+        // emit connectToTcpPort("127.0.0.1", 502);
+        emit connectToTcpPort("172.16.5.101", 502);
     }
 }
 
@@ -273,9 +271,8 @@ void DockManager::onConnectionStateChanged(bool connected)
 {
     m_isConnected = connected;
 
-    if (m_actConnect) {
-        m_actConnect->setText(connected ? tr("Отключить") : tr("Подключить"));
-    }
+    if (m_buttonConnect)
+        m_buttonConnect->setText(connected ? tr("Отключить") : tr("Подключить"));
 
     statusBar()->showMessage(connected ? tr("Подключено") : tr("Отключено"), 3000);
 
@@ -514,6 +511,13 @@ void DockManager::saveLayout()
 {
     QSettings s(settingsOrg(), settingsApp());
     s.setValue("geometry", saveGeometry());
+
+    const auto widget = findChild<BlockTableForm*>();
+    if (widget) {
+        widget->getSplitterSizes();
+        // s.setValue("splitterSizes", widget->getSplitterSizes());
+    }
+
     saveDockContents(s);
     s.setValue("state", saveState());
     statusBar()->showMessage(tr("Раскладка сохранена"), 2000);
@@ -523,6 +527,12 @@ void DockManager::restoreLayout()
 {
     QSettings s(settingsOrg(), settingsApp());
     restoreGeometry(s.value("geometry").toByteArray());
+
+    // const auto widget = findChild<BlockTableForm*>();
+    // if (widget) {
+    //     widget->getSplitterSizes();
+    // }
+
     loadDockContents(s);
     restoreState(s.value("state").toByteArray());
     statusBar()->showMessage(tr("Раскладка восстановлена"), 2000);

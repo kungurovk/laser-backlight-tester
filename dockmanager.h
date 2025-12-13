@@ -70,7 +70,7 @@ private:
     QMenu *m_viewMenu = nullptr;
     QMenu *m_windowMenu = nullptr;
     QToolBar *m_mainToolbar = nullptr;
-    QAction *m_actConnect = nullptr;
+    QPushButton *m_buttonConnect = nullptr;
     QAction *m_actAddSensorTable = nullptr;
     QAction *m_actAddBlockTable = nullptr;
     QAction *m_actAddModeControl = nullptr;

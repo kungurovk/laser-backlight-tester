@@ -83,6 +83,16 @@ void BlockTableForm::setModbusClient(ModbusClient *client)
     }
 }
 
+QList<int> BlockTableForm::getSplitterSizes()
+{
+    return ui->splitter->sizes();
+}
+
+void BlockTableForm::setSplitterSizes(const QList<int> &sizes)
+{
+    ui->splitter->setSizes(sizes);
+}
+
 void BlockTableForm::handleReadCompleted(int startAddress, const QVector<quint16> &values)
 {
     std::variant<quint16, quint32> value;

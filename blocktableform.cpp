@@ -50,12 +50,12 @@ BlockTableForm::BlockTableForm(QWidget *parent)
             this, [this]() {
         ui->blockTableWidget->viewport()->update();
     }, Qt::DirectConnection);
-    connect(ui->detailTableWidget->horizontalHeader(), &QHeaderView::sectionResized,
+    m_detailTableConnection = connect(ui->detailTableWidget->horizontalHeader(), &QHeaderView::sectionResized,
             this, [this](int logicalIndex, int /*oldSize*/, int /*newSize*/) {
                 Q_UNUSED(logicalIndex);
                 ui->detailTableWidget->resizeRowsToContents();
                 ui->detailTableWidget->viewport()->update();
-            }, Qt::DirectConnection);
+            });
 }
 
 BlockTableForm::~BlockTableForm()
@@ -142,7 +142,17 @@ void BlockTableForm::showDetails(int address)
     else
         fillPowerSupplyQuantumtronsStatus();
 
+    disconnect(m_detailTableConnection);
+
     populateBlockStatusTable(value);
+
+    ui->detailTableWidget->resizeRowsToContents();
+    m_detailTableConnection = connect(ui->detailTableWidget->horizontalHeader(), &QHeaderView::sectionResized,
+                                      this, [this](int logicalIndex, int /*oldSize*/, int /*newSize*/) {
+        Q_UNUSED(logicalIndex);
+        ui->detailTableWidget->resizeRowsToContents();
+        ui->detailTableWidget->viewport()->update();
+    });
 
     qDebug() << ui->blockTableWidget->item(m_addressToRow[address], 2)->data(Qt::UserRole);
 }

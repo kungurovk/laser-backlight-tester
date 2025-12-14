@@ -66,6 +66,7 @@ private:
     QHash<int, int> m_addressToRow;
 
     QVector<BlockStatusEntry> m_blockStatusEntries;
+    QMetaObject::Connection m_detailTableConnection;
 };
 
 #endif // BLOCKTABLEFORM_H

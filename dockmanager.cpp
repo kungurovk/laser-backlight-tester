@@ -502,7 +502,8 @@ void DockManager::requestAllValues()
     const auto widgets = findChildren<QWidget*>();
     for (auto *widget : widgets) {
         if (auto *form = dynamic_cast<ModbusBase*>(widget)) {
-            form->requestAllValues();
+            if (widget->isVisible())
+                form->requestAllValues();
         }
     }
 }

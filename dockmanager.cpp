@@ -24,6 +24,11 @@
 #include <QComboBox>
 #include <QPushButton>
 #include <QDebug>
+#include <QTimer>
+
+#ifdef Q_OS_WIN
+#include <qt_windows.h>
+#endif
 
 static QString settingsOrg() { return QStringLiteral("Lassard"); }
 static QString settingsApp() { return QStringLiteral("Laser Backlight Tester"); }
@@ -304,6 +309,25 @@ void DockManager::connectDockSignals(QDockWidget *dock)
     if (!dock) return;
     connect(dock, &QDockWidget::visibilityChanged, this, [this](bool){ updateActionChecks(); });
     connect(dock, &QObject::destroyed, this, [this](QObject*){ updateActionChecks(); });
+        connect(dock, &QDockWidget::topLevelChanged, [dock](bool floating) {
+        if (floating) {
+            // Defer the native window modifications to ensure the window handle is valid
+            // and to avoid race conditions with Qt's own window state management.
+            QTimer::singleShot(0, dock, [=](){
+#ifdef Q_OS_WIN
+                HWND hwnd = reinterpret_cast<HWND>(dock->winId());
+                if (hwnd) {
+                    SetWindowLongPtr(hwnd, GWLP_HWNDPARENT, 0);
+                    SetWindowLongPtr(hwnd, GWL_STYLE, GetWindowLongPtr(hwnd, GWL_STYLE) | WS_CAPTION);
+                    SetWindowPos(hwnd, 0, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
+                }
+#else
+                dock->setWindowFlags(dock->windowFlags() & ~Qt::Tool | Qt::Window);
+#endif
+                dock->show();
+            });
+        }
+    });
 }
 
 void DockManager::updateActionChecks()
@@ -593,3 +617,4 @@ void DockManager::closeEvent(QCloseEvent *event)
     // saveLayout(); bad way
     QMainWindow::closeEvent(event);
 }
+

@@ -432,14 +432,13 @@ void DockManager::toggleDockTitles(bool show)
 void DockManager::saveDockContents(QSettings &settings)
 {
     settings.beginGroup("docks");
-    settings.remove("");
     const auto docks = findChildren<QDockWidget*>();
-    settings.setValue("count", docks.size());
-    int maxCounter = m_dockCounter;
-    int i = 0;
     for (auto *dock : docks) {
-        settings.beginGroup(QString::number(i));
-        settings.setValue("objectName", dock->objectName());
+        if (dock->isFloating() || !dock->isVisible())
+            continue;
+
+        // Use objectName as a unique key to ensure overwriting
+        settings.beginGroup(dock->objectName());
         settings.setValue("title", dock->windowTitle());
         QWidget *content = dock->widget();
         const QString type = detectDockType(content);
@@ -453,32 +452,22 @@ void DockManager::saveDockContents(QSettings &settings)
         } else if (auto *lab = qobject_cast<QLabel*>(content)) {
             settings.setValue("payload", lab->text());
         }
-        const QString on = dock->objectName();
-        const int idx = on.lastIndexOf('_');
-        if (idx > 0) {
-            bool ok = false; int num = on.mid(idx + 1).toInt(&ok);
-            if (ok) maxCounter = qMax(maxCounter, num);
-        }
         settings.endGroup();
-        ++i;
     }
-    settings.setValue("counter", maxCounter);
     settings.endGroup();
 }
 
 void DockManager::loadDockContents(QSettings &settings)
 {
     settings.beginGroup("docks");
-    const int count = settings.value("count", 0).toInt();
-    m_dockCounter = settings.value("counter", 0).toInt();
-    for (int i = 0; i < count; ++i) {
-        settings.beginGroup(QString::number(i));
-        const QString obj = settings.value("objectName").toString();
+    const QStringList dockObjectNames = settings.childGroups();
+    for (const QString &objName : dockObjectNames) {
+        settings.beginGroup(objName);
         const QString title = settings.value("title").toString();
         const QString type = settings.value("type").toString();
         const QVariant payload = settings.value("payload");
         QWidget *content = createWidgetFromType(type, payload);
-        auto *dock = createDockFor(content, title.isEmpty() ? QStringLiteral("Dock") : title, obj);
+        auto *dock = createDockFor(content, title.isEmpty() ? QStringLiteral("Dock") : title, objName);
         dock->hide();
         settings.endGroup();
     }
@@ -535,6 +524,11 @@ void DockManager::requestAllValues()
 void DockManager::saveLayout()
 {
     QSettings s(settingsOrg(), settingsApp());
+
+    // Explicitly remove old groups before saving new ones
+    s.remove("docks");
+    s.remove("state");
+
     s.setValue("geometry", saveGeometry());
 
     const auto widget = findChild<BlockTableForm*>();
@@ -545,6 +539,7 @@ void DockManager::saveLayout()
 
     saveDockContents(s);
     s.setValue("state", saveState());
+    s.sync(); // Force sync to registry
     statusBar()->showMessage(tr("Раскладка сохранена"), 2000);
 }
 

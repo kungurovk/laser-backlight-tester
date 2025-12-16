@@ -50,16 +50,14 @@ DockManager::DockManager(QWidget *parent)
     setDockOptions(QMainWindow::AllowTabbedDocks | QMainWindow::AnimatedDocks | QMainWindow::AllowNestedDocks | QMainWindow::GroupedDragging);
     setTabPosition(Qt::AllDockWidgetAreas, QTabWidget::North);
 
-    // statusBar()->showMessage(tr("Ready"));
-
-    if (findChildren<QDockWidget*>().isEmpty()) {
-        // Fallback demo content if nothing restored
-        addModeControlWidget();
-        addSensorTableWidget();
-        addBlockTableWidget();
-        addValuesWidget();
-        addGeneratorWidget();
-    }
+    // if (findChildren<QDockWidget*>().isEmpty()) {
+    //     // Fallback demo content if nothing restored
+    //     addModeControlWidget();
+    //     addSensorTableWidget();
+    //     addBlockTableWidget();
+    //     addValuesWidget();
+    //     addGeneratorWidget();
+    // }
     // Try restore previous session
     restoreLayout();
 }
@@ -79,6 +77,12 @@ void DockManager::setModbusClient(ModbusClient *client)
     for (auto *widget : widgets) {
         if (auto *form = dynamic_cast<ModbusBase*>(widget)) {
             form->setModbusClient(m_modbusClient);
+        }
+        if (auto *form = dynamic_cast<SensorsTableForm*>(widget)) {
+            qDebug() << "SensorsTableForm";
+        }
+        if (auto *form = dynamic_cast<LimitAndTargetValuesForm*>(widget)) {
+            qDebug() << "LimitAndTargetValuesForm";
         }
     }
 
@@ -172,11 +176,11 @@ void DockManager::createMenusAndToolbars()
 
     m_mainToolbar->addWidget(new QLabel("Период опроса (сек.)", this));
     auto comboBox = new QComboBox(this);
-    comboBox->addItems({"3", "5", "10", "15", "30", "60"});
+    comboBox->addItems({"1", "2", "3", "4", "5"});
     connect(comboBox, &QComboBox::currentTextChanged, [this](const QString &text){
         m_requestAllTimer->setInterval(text.toUInt() * 1000);
     });
-    comboBox->setCurrentText("5");
+    comboBox->setCurrentText("1");
     m_mainToolbar->addWidget(comboBox);
     m_startStopButton = new QPushButton(this);
     m_startStopButton->setFixedHeight(comboBox->height());
@@ -263,7 +267,6 @@ void DockManager::addGeneratorWidget()
 
 void DockManager::toggleConnect(bool /*on*/)
 {
-    qDebug() << "toggleConnect";
     if (m_isConnected) {
         emit disconnectFromTcp();
     } else {
@@ -434,7 +437,7 @@ void DockManager::saveDockContents(QSettings &settings)
     settings.beginGroup("docks");
     const auto docks = findChildren<QDockWidget*>();
     for (auto *dock : docks) {
-        if (dock->isFloating() || !dock->isVisible())
+        if (!dock->isVisible())
             continue;
 
         // Use objectName as a unique key to ensure overwriting
@@ -495,15 +498,15 @@ QWidget* DockManager::createWidgetFromType(const QString &typeName, const QVaria
         auto *w = new BlockTableForm(this);
         return w;
     } else if (typeName == QLatin1String("modeControlForm")) {
-        auto *modeControlForm = new ModeControlForm;
+        auto *modeControlForm = new ModeControlForm(this);
         connect(modeControlForm, &ModeControlForm::modeRequested, this, &DockManager::modeRequested);
         return modeControlForm;
     } else if (typeName == QLatin1String("valuesForm")) {
-        auto *valuesForm = new LimitAndTargetValuesForm;
+        auto *valuesForm = new LimitAndTargetValuesForm(this);
         return valuesForm;
     } else if (typeName == QLatin1String("generatorForm")) {
-        auto *valuesForm = new GeneratorSetterForm;
-        return valuesForm;
+        auto *generatorForm = new GeneratorSetterForm(this);
+        return generatorForm;
     }
     auto *fallback = new QLabel(tr("Неизвестный тип: %1").arg(typeName), this);
     fallback->setAlignment(Qt::AlignCenter);
@@ -546,7 +549,27 @@ void DockManager::saveLayout()
 void DockManager::restoreLayout()
 {
     QSettings s(settingsOrg(), settingsApp());
-    restoreGeometry(s.value("geometry").toByteArray());
+    
+    // Restore geometry or center the window if first launch
+    if (!s.contains("geometry")) {
+        // Ensure window is shown and properly sized before centering
+        show();
+        adjustSize();
+        
+        // Center the window on the primary screen
+        QScreen *screen = QGuiApplication::primaryScreen();
+        QRect screenGeometry = screen->availableGeometry();
+        
+        // Calculate center position
+        int x = screenGeometry.left() + (screenGeometry.width() - width()) / 2;
+        int y = screenGeometry.top() + (screenGeometry.height() - height()) / 2;
+        
+        // Move and ensure the window is fully visible on screen
+        move(qMax(screenGeometry.left(), qMin(x, screenGeometry.right() - width())),
+             qMax(screenGeometry.top(), qMin(y, screenGeometry.bottom() - height())));
+    } else {
+        restoreGeometry(s.value("geometry").toByteArray());
+    }
 
     // const auto widget = findChild<BlockTableForm*>();
     // if (widget) {

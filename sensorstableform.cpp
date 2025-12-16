@@ -6,6 +6,8 @@
 #include "endianutils.h"
 
 #include <cstring>
+#include <QDebug>
+#include <QtEndian>
 
 namespace {
 QString makeAddressString(int address)
@@ -69,7 +71,10 @@ void SensorsTableForm::handleReadCompleted(int startAddress, const QVector<quint
     }
     else
     {
-        quint32 val32 = (quint32(toBigEndian(values.last())) << 16) | toBigEndian(values.first());
+        // quint32 val32 = (quint32(toBigEndian(values.last())) << 16) | toBigEndian(values.first());
+        // Convert from little endian to host byte order
+        quint32 val32 = (quint32(qFromLittleEndian<quint16>(values.data() + 1)) << 16) | qFromLittleEndian<quint16>(values.data());
+        // qDebug() << startAddress << *(values.data() + 1) << *(values.data());
         float fValue = 0.f;
         std::memcpy(&fValue, &val32, sizeof(fValue));
         value = fValue;

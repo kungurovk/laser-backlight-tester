@@ -6,6 +6,7 @@
 #include "endianutils.h"
 
 #include <cstring>
+#include <QtEndian>
 
 namespace {
 QString makeAddressString(int address)
@@ -56,7 +57,9 @@ void LimitAndTargetValuesForm::setModbusClient(ModbusClient *client)
 
 void LimitAndTargetValuesForm::handleReadCompleted(int startAddress, const QVector<quint16> &values)
 {
-    quint32 val32 = (quint32(toBigEndian(values.last())) << 16) | toBigEndian(values.first());
+    // quint32 val32 = (quint32(toBigEndian(values.last())) << 16) | toBigEndian(values.first());
+    // quint32 val32 = (quint32((values.first())) << 16) | (values.last());
+    quint32 val32 = (quint32(qFromLittleEndian<quint16>(values.data() + 1)) << 16) | qFromLittleEndian<quint16>(values.data());
     float fValue = 0.f;
     std::memcpy(&fValue, &val32, sizeof(fValue));
 

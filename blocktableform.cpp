@@ -154,7 +154,7 @@ void BlockTableForm::showDetails(int address)
         ui->detailTableWidget->viewport()->update();
     });
 
-    qDebug() << ui->blockTableWidget->item(m_addressToRow[address], 2)->data(Qt::UserRole);
+    // qDebug() << ui->blockTableWidget->item(m_addressToRow[address], 2)->data(Qt::UserRole);
 }
 
 void BlockTableForm::setupTable()

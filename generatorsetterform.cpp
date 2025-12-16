@@ -7,6 +7,7 @@
 #include "textbuttonform.h"
 
 #include <cstring>
+#include <QtEndian>
 
 namespace {
 QString makeAddressString(int address)
@@ -66,7 +67,12 @@ void GeneratorSetterForm::handleReadCompleted(int startAddress, const QVector<qu
     }
     else
     {
-        quint32 val32 = (quint32(toBigEndian(values.last())) << 16) | toBigEndian(values.first());
+        //0_1_2_3 to 3_2_1_0
+        // quint32 val32 = (quint32(toBigEndian(values.last())) << 16) | toBigEndian(values.first());
+        //3_2_1_0
+        // quint32 val32 = (quint32((values.first())) << 16) | (values.last());
+        //1_0_3_2 to 3_2_1_0
+        quint32 val32 = (quint32(qFromLittleEndian<quint16>(values.data() + 1)) << 16) | qFromLittleEndian<quint16>(values.data());
         float fValue = 0.f;
         std::memcpy(&fValue, &val32, sizeof(fValue));
         value = fValue;

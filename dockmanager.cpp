@@ -176,9 +176,9 @@ void DockManager::createMenusAndToolbars()
 
     m_mainToolbar->addWidget(new QLabel("Период опроса (сек.)", this));
     auto comboBox = new QComboBox(this);
-    comboBox->addItems({"1", "2", "3", "4", "5"});
+    comboBox->addItems({"0.5", "1", "2", "3", "4", "5"});
     connect(comboBox, &QComboBox::currentTextChanged, [this](const QString &text){
-        m_requestAllTimer->setInterval(text.toUInt() * 1000);
+        m_requestAllTimer->setInterval(text.toFloat() * 1000);
     });
     comboBox->setCurrentText("1");
     m_mainToolbar->addWidget(comboBox);

@@ -59,83 +59,83 @@ void GeneratorSetterForm::setModbusClient(ModbusClient *client)
 
 void GeneratorSetterForm::handleReadCompleted(int startAddress, const QVector<quint16> &values)
 {
-    qDebug() << "Received" << values.size() << "registers starting from" << startAddress;
-    const int baseAddress = GeneratorSetterAddress::TermoStableOnOff; // 0x500
-    int currentAddress = startAddress;
-    int valueIndex = 0;
-    
-    while (valueIndex < values.size()) {
-        // Calculate the relative address from our base (0x500)
-        const int relativeAddress = currentAddress - baseAddress;
-        
-        // Determine how many registers to read for the current address
-        bool isFloat = false;
-        
-        // Check if this is a float value (2 registers)
-        if (relativeAddress == (GeneratorSetterAddress::DiodTemperature - baseAddress) || 
-            relativeAddress == (GeneratorSetterAddress::CrystalTemperature - baseAddress)) {
-            // Make sure we have enough data for a float (2 registers)
-            if (valueIndex + 1 >= values.size()) {
-                qWarning() << "Not enough data for float value at address" << currentAddress;
-                break;
-            }
-            isFloat = true;
-        }
-        
-        // Process the value(s) at current address
-        std::variant<quint16, float> value;
-        bool validAddress = true;
-        
-        if (relativeAddress == (GeneratorSetterAddress::TermoStableOnOff - baseAddress) ||
-            relativeAddress == (GeneratorSetterAddress::ImpulseOnOff - baseAddress)) {
-            // Boolean value (1 register)
-            value = toBigEndian(values[valueIndex]);
-            valueIndex++;
-        } else if (isFloat) {
-            // Float value (2 registers)
-            //0_1_2_3 to 3_2_1_0
-            // quint32 val32 = (quint32(toBigEndian(values.last())) << 16) | toBigEndian(values.first());
-            //3_2_1_0
-            // quint32 val32 = (quint32((values.first())) << 16) | (values.last());
-            //1_0_3_2 to 3_2_1_0
-            quint32 val32 = (quint32(qFromLittleEndian<quint16>(values.data() + valueIndex + 1)) << 16) | 
-                           qFromLittleEndian<quint16>(values.data() + valueIndex);
-            float fValue = 0.f;
-            std::memcpy(&fValue, &val32, sizeof(fValue));
-            value = fValue;
-            valueIndex += 2;
-        } else {
-            // Unknown address, skip it
-            qWarning() << "Unknown address in response:" << currentAddress;
-            valueIndex++;
-            currentAddress++;
-            continue;
-        }
-        
-        // Update the UI for this value
-        const auto rowIt = m_addressToRow.constFind(currentAddress);
-        if (rowIt != m_addressToRow.constEnd()) {
-            const int row = rowIt.value();
-            QTableWidgetItem *valueItem = ui->generatorTableWidget->item(row, 2);
-            if (!valueItem) {
-                valueItem = new QTableWidgetItem;
-                ui->generatorTableWidget->setItem(row, 2, valueItem);
-            }
-            if (auto* val16 = std::get_if<quint16>(&value)) {
-                TextButtonForm *textButtonItem = qobject_cast<TextButtonForm*>(ui->generatorTableWidget->cellWidget(row, 1));
-                if (textButtonItem) {
-                    textButtonItem->setOnButton(*val16 ? true : false);
+    if (m_addressToRow.constFind(startAddress) != m_addressToRow.constEnd())
+    {
+        qDebug() << "Received" << values.size() << "registers starting from" << startAddress;
+        const int baseAddress = GeneratorSetterAddress::TermoStableOnOff; // 0x500
+        int currentAddress = startAddress;
+        int valueIndex = 0;
+
+        while (valueIndex < values.size()) {
+            // Calculate the relative address from our base (0x500)
+            const int relativeAddress = currentAddress - baseAddress;
+
+            // Determine how many registers to read for the current address
+            bool isFloat = false;
+
+            // Check if this is a float value (2 registers)
+            if (relativeAddress == (GeneratorSetterAddress::DiodTemperature - baseAddress) ||
+                relativeAddress == (GeneratorSetterAddress::CrystalTemperature - baseAddress)) {
+                // Make sure we have enough data for a float (2 registers)
+                if (valueIndex + 1 >= values.size()) {
+                    qWarning() << "Not enough data for float value at address" << currentAddress;
+                    break;
                 }
-                valueItem->setText(QString::number(*val16));
-                valueItem->setData(Qt::UserRole, QVariant::fromValue(*val16));
+                isFloat = true;
+            }
+
+            // Process the value(s) at current address
+            std::variant<quint16, float> value;
+            if (relativeAddress == (GeneratorSetterAddress::TermoStableOnOff - baseAddress) ||
+                relativeAddress == (GeneratorSetterAddress::ImpulseOnOff - baseAddress)) {
+                // Boolean value (1 register)
+                value = toBigEndian(values[valueIndex]);
+                valueIndex++;
+            } else if (isFloat) {
+                // Float value (2 registers)
+                //0_1_2_3 to 3_2_1_0
+                // quint32 val32 = (quint32(toBigEndian(values.last())) << 16) | toBigEndian(values.first());
+                //3_2_1_0
+                // quint32 val32 = (quint32((values.first())) << 16) | (values.last());
+                //1_0_3_2 to 3_2_1_0
+                quint32 val32 = (quint32(qFromLittleEndian<quint16>(values.data() + valueIndex + 1)) << 16) |
+                                qFromLittleEndian<quint16>(values.data() + valueIndex);
+                float fValue = 0.f;
+                std::memcpy(&fValue, &val32, sizeof(fValue));
+                value = fValue;
+                valueIndex += 2;
+            } else {
+                // Unknown address, skip it
+                qWarning() << "Unknown address in response:" << currentAddress;
+                valueIndex++;
                 currentAddress++;
-            } else if (auto* fValue = std::get_if<float>(&value)) {
-                valueItem->setText(QString::number(*fValue));
-                valueItem->setData(Qt::UserRole, QVariant::fromValue(*fValue));
-                currentAddress += 2;
+                continue;
+            }
+
+            // Update the UI for this value
+            const auto rowIt = m_addressToRow.constFind(currentAddress);
+            if (rowIt != m_addressToRow.constEnd()) {
+                const int row = rowIt.value();
+                QTableWidgetItem *valueItem = ui->generatorTableWidget->item(row, 2);
+                if (!valueItem) {
+                    valueItem = new QTableWidgetItem;
+                    ui->generatorTableWidget->setItem(row, 2, valueItem);
+                }
+                if (auto* val16 = std::get_if<quint16>(&value)) {
+                    TextButtonForm *textButtonItem = qobject_cast<TextButtonForm*>(ui->generatorTableWidget->cellWidget(row, 1));
+                    if (textButtonItem) {
+                        textButtonItem->setOnButton(*val16 ? true : false);
+                    }
+                    valueItem->setText(QString::number(*val16));
+                    valueItem->setData(Qt::UserRole, QVariant::fromValue(*val16));
+                    currentAddress++;
+                } else if (auto* fValue = std::get_if<float>(&value)) {
+                    valueItem->setText(QString::number(*fValue));
+                    valueItem->setData(Qt::UserRole, QVariant::fromValue(*fValue));
+                    currentAddress += 2;
+                }
             }
         }
-        
     }
 }
 
@@ -257,17 +257,16 @@ void GeneratorSetterForm::requestAllValues() const
 
     // Read all registers in one call
     const int startAddress = GeneratorSetterAddress::TermoStableOnOff;
-    const int registerCount =
-        GeneratorSetterAddress::AddressTillOfEndGenerator - GeneratorSetterAddress::TermoStableOnOff; // 0x500-0x505 (6 registers total)
+    const int registerCount = GeneratorSetterAddress::AddressTillOfEndGenerator - startAddress; // 0x500-0x505 (6 registers total)
 
     QMetaObject::invokeMethod(m_modbusClient,
-        [client = m_modbusClient, startAddress, registerCount]() {
-            if (!client) {
-                return;
-            }
-            client->readHoldingRegisters(startAddress, registerCount);
-        },
-        Qt::QueuedConnection);
+                              [client = m_modbusClient, startAddress, registerCount]() {
+                                  if (!client) {
+                                      return;
+                                  }
+                                  client->readHoldingRegisters(startAddress, registerCount);
+                              },
+                              Qt::QueuedConnection);
 }
 
 void GeneratorSetterForm::on_pushButton_clicked()

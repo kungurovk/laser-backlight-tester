@@ -3,10 +3,10 @@
 
 #include "modbusclient.h"
 #include "enums.h"
-#include "endianutils.h"
 
 #include <cstring>
 #include <QtEndian>
+#include <QDebug>
 
 namespace {
 QString makeAddressString(int address)
@@ -59,24 +59,40 @@ void LimitAndTargetValuesForm::handleReadCompleted(int startAddress, const QVect
 {
     // quint32 val32 = (quint32(toBigEndian(values.last())) << 16) | toBigEndian(values.first());
     // quint32 val32 = (quint32((values.first())) << 16) | (values.last());
-    quint32 val32 = (quint32(qFromLittleEndian<quint16>(values.data() + 1)) << 16) | qFromLittleEndian<quint16>(values.data());
-    float fValue = 0.f;
-    std::memcpy(&fValue, &val32, sizeof(fValue));
+    if (m_addressToRow.constFind(startAddress) != m_addressToRow.constEnd())
+    {
+        qDebug() << "Received" << values.size() << "registers starting from" << startAddress;
+        const int baseAddress = ValuesTableAddress::CaseTemperatureMinValue_1; // 0x200
+        int currentAddress = startAddress;
+        int valueIndex = 0;
 
-    const auto rowIt = m_addressToRow.constFind(startAddress);
-    if (rowIt == m_addressToRow.constEnd()) {
-        return;
+        while (valueIndex < values.size()) {
+            if (valueIndex + 1 >= values.size()) {
+                qWarning() << "Not enough data for float value at address" << currentAddress;
+                break;
+            }
+
+            quint32 val32 = (quint32(qFromLittleEndian<quint16>(values.data() + valueIndex + 1)) << 16) |
+                            qFromLittleEndian<quint16>(values.data() + valueIndex);
+            float fValue = 0.f;
+            std::memcpy(&fValue, &val32, sizeof(fValue));
+            valueIndex += 2;
+
+            const auto rowIt = m_addressToRow.constFind(currentAddress);
+            if (rowIt != m_addressToRow.constEnd()) {
+                const int row = rowIt.value();
+                QTableWidgetItem *valueItem = ui->limitAndTargetTableWidget->item(row, 2);
+                if (!valueItem) {
+                    valueItem = new QTableWidgetItem;
+                    ui->limitAndTargetTableWidget->setItem(row, 2, valueItem);
+                }
+
+                valueItem->setText(QString::number(fValue));
+                valueItem->setData(Qt::UserRole, QVariant::fromValue(fValue));
+                currentAddress += 2;
+            }
+        }
     }
-
-    const int row = rowIt.value();
-    QTableWidgetItem *valueItem = ui->limitAndTargetTableWidget->item(row, 2);
-    if (!valueItem) {
-        valueItem = new QTableWidgetItem;
-        ui->limitAndTargetTableWidget->setItem(row, 2, valueItem);
-    }
-
-    valueItem->setText(QString::number(fValue));
-    valueItem->setData(Qt::UserRole, QVariant::fromValue(fValue));
 }
 
 void LimitAndTargetValuesForm::setupTable()
@@ -153,7 +169,7 @@ void LimitAndTargetValuesForm::insertRow(const BlockEntry &entry)
     m_addressToRow.insert(entry.address, row);
 }
 
-void LimitAndTargetValuesForm::requestAllValues() const
+void LimitAndTargetValuesForm::requestValueByValue() const
 {
     if (!m_modbusClient) {
         return;
@@ -172,8 +188,30 @@ void LimitAndTargetValuesForm::requestAllValues() const
     }
 }
 
+void LimitAndTargetValuesForm::requestAllValues() const
+{
+    if (!m_modbusClient) {
+        return;
+    }
+
+    // Read all registers in one call
+    const int startAddress = ValuesTableAddress::CaseTemperatureMinValue_1;
+    const int registerCount =
+        ValuesTableAddress::AddressTillOfEndValues - startAddress; // 0x200-0x240 (6 registers total)
+
+    QMetaObject::invokeMethod(m_modbusClient,
+                              [client = m_modbusClient, startAddress, registerCount]() {
+                                  if (!client) {
+                                      return;
+                                  }
+                                  client->readHoldingRegisters(startAddress, registerCount);
+                              },
+                              Qt::QueuedConnection);
+}
+
 void LimitAndTargetValuesForm::on_pushButton_clicked()
 {
     requestAllValues();
+    // requestValueByValue();
 }
 

@@ -89,6 +89,7 @@ enum ValuesTableAddress
     KP_PID_LBO                      = 0x234,
     KI_PID_LBO                      = 0x236,
     KD_PID_LBO                      = 0x238,
+    AddressTillOfEndValues          = 0x240
 };
 
 enum GeneratorSetterAddress

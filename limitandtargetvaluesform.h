@@ -34,6 +34,7 @@ private:
     void setupTable();
     void populateTable();
     void insertRow(const BlockEntry &entry);
+    void requestValueByValue() const;
     void requestAllValues() const;
 
     Ui::LimitAndTargetValuesForm *ui;

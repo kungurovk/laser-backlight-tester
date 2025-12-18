@@ -93,10 +93,11 @@ enum ValuesTableAddress
 
 enum GeneratorSetterAddress
 {
-    TermoStableOnOff    = 0x500,
-    ImpulseOnOff        = 0x501,
-    DiodTemperature     = 0x502,
-    CrystalTemperature  = 0x504,
+    TermoStableOnOff            = 0x500,
+    ImpulseOnOff                = 0x501,
+    DiodTemperature             = 0x502,
+    CrystalTemperature          = 0x504,
+    AddressTillOfEndGenerator   = 0x506
 };
 
 enum PowerSupplyQuantumtronsStatusBits

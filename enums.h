@@ -40,6 +40,7 @@ enum SensorsTableAddress
     CrystalTemperature_1    = 0x11a,
     CrystalTemperature_2    = 0x11c,
     LaserWorkTime           = 0x12c,
+    AddressTillOfEndSensors = 0x12e
 };
 
 enum BlockTableAddress

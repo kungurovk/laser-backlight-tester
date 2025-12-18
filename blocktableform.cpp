@@ -30,32 +30,32 @@ BlockTableForm::BlockTableForm(QWidget *parent)
     populateBlockTable();
     connect(ui->blockTableWidget->horizontalHeader(), &QHeaderView::sectionResized,
             this, [this](int logicalIndex, int /*oldSize*/, int /*newSize*/) {
-        Q_UNUSED(logicalIndex);
-        const int col = 3; // actions column with QPushButton
-        const int rows = ui->blockTableWidget->rowCount();
-        for (int r = 0; r < rows; ++r) {
-            const QModelIndex idx = ui->blockTableWidget->model()->index(r, col);
-            const QRect rect = ui->blockTableWidget->visualRect(idx);
-            if (!rect.isNull()) {
-                if (QWidget *w = ui->blockTableWidget->cellWidget(r, col)) {
-                    w->setGeometry(rect);
+                Q_UNUSED(logicalIndex);
+                const int col = 3; // actions column with QPushButton
+                const int rows = ui->blockTableWidget->rowCount();
+                for (int r = 0; r < rows; ++r) {
+                    const QModelIndex idx = ui->blockTableWidget->model()->index(r, col);
+                    const QRect rect = ui->blockTableWidget->visualRect(idx);
+                    if (!rect.isNull()) {
+                        if (QWidget *w = ui->blockTableWidget->cellWidget(r, col)) {
+                            w->setGeometry(rect);
+                        }
+                        ui->blockTableWidget->viewport()->update(rect);
+                    }
                 }
-                ui->blockTableWidget->viewport()->update(rect);
-            }
-        }
-        ui->blockTableWidget->resizeRowsToContents();
-        ui->blockTableWidget->viewport()->update();
-    }, Qt::DirectConnection);
+                ui->blockTableWidget->resizeRowsToContents();
+                ui->blockTableWidget->viewport()->update();
+            }, Qt::DirectConnection);
     connect(ui->blockTableWidget->horizontalHeader(), &QHeaderView::geometriesChanged,
             this, [this]() {
-        ui->blockTableWidget->viewport()->update();
-    }, Qt::DirectConnection);
+                ui->blockTableWidget->viewport()->update();
+            }, Qt::DirectConnection);
     m_detailTableConnection = connect(ui->detailTableWidget->horizontalHeader(), &QHeaderView::sectionResized,
-            this, [this](int logicalIndex, int /*oldSize*/, int /*newSize*/) {
-                Q_UNUSED(logicalIndex);
-                ui->detailTableWidget->resizeRowsToContents();
-                ui->detailTableWidget->viewport()->update();
-            });
+                                      this, [this](int logicalIndex, int /*oldSize*/, int /*newSize*/) {
+                                          Q_UNUSED(logicalIndex);
+                                          ui->detailTableWidget->resizeRowsToContents();
+                                          ui->detailTableWidget->viewport()->update();
+                                      });
 }
 
 BlockTableForm::~BlockTableForm()
@@ -95,34 +95,61 @@ void BlockTableForm::setSplitterSizes(const QList<int> &sizes)
 
 void BlockTableForm::handleReadCompleted(int startAddress, const QVector<quint16> &values)
 {
-    std::variant<quint16, quint32> value;
-
-    if (startAddress == BlockTableAddress::LaserControlBoardStatus ||
-        startAddress == BlockTableAddress::PowerSupplyControlStatus)
+    if (m_addressToRow.constFind(startAddress) != m_addressToRow.constEnd())
     {
-        value = (quint32(toBigEndian(values.last())) << 16) | toBigEndian(values.first());
-    } else {
-        value = toBigEndian(values.first());
-    }
+        qDebug() << "Received" << values.size() << "registers starting from" << startAddress;
+        const int baseAddress = BlockTableAddress::LaserControlBoardStatus; // 0x11e
+        int currentAddress = startAddress;
+        int valueIndex = 0;
 
-    const auto rowIt = m_addressToRow.constFind(startAddress);
-    if (rowIt == m_addressToRow.constEnd()) {
-        return;
-    }
+        while (valueIndex < values.size()) {
+            // Calculate the relative address from our base (0x11e)
+            const int relativeAddress = currentAddress - baseAddress;
 
-    const int row = rowIt.value();
-    QTableWidgetItem *valueItem = ui->blockTableWidget->item(row, 2);
-    if (!valueItem) {
-        valueItem = new QTableWidgetItem;
-        ui->blockTableWidget->setItem(row, 2, valueItem);
-    }
+            // Check if this is a float value (2 registers)
+            if (relativeAddress == (BlockTableAddress::LaserControlBoardStatus - baseAddress) ||
+                relativeAddress == (BlockTableAddress::PowerSupplyControlStatus - baseAddress)) {
+                // Make sure we have enough data for a float (2 registers)
+                if (valueIndex + 1 >= values.size()) {
+                    qWarning() << "Not enough data for float value at address" << currentAddress;
+                    break;
+                }
+            }
 
-    if (auto* val16 = std::get_if<quint16>(&value)) {
-        valueItem->setText(QString::number(*val16));
-        valueItem->setData(Qt::UserRole, QVariant::fromValue(*val16));
-    } else if (auto* val32 = std::get_if<quint32>(&value)) {
-        valueItem->setText(QString::number(*val32));
-        valueItem->setData(Qt::UserRole, QVariant::fromValue(*val32));
+            // Process the value(s) at current address
+            std::variant<quint16, quint32> value;
+
+            if (relativeAddress == (BlockTableAddress::LaserControlBoardStatus - baseAddress) ||
+                relativeAddress == (BlockTableAddress::PowerSupplyControlStatus - baseAddress))
+            {
+                value = (quint32(toBigEndian(*(values.data() + valueIndex + 1))) << 16) | toBigEndian(*(values.data() + valueIndex));
+                valueIndex += 2;
+            } else {
+                value = toBigEndian(values[valueIndex]);
+                valueIndex++;
+            }
+
+            // Update the UI for this value
+            const auto rowIt = m_addressToRow.constFind(currentAddress);
+            if (rowIt != m_addressToRow.constEnd()) {
+                const int row = rowIt.value();
+                QTableWidgetItem *valueItem = ui->blockTableWidget->item(row, 2);
+                if (!valueItem) {
+                    valueItem = new QTableWidgetItem;
+                    ui->blockTableWidget->setItem(row, 2, valueItem);
+                }
+
+                if (auto* val16 = std::get_if<quint16>(&value)) {
+                    valueItem->setText(QString::number(*val16));
+                    valueItem->setData(Qt::UserRole, QVariant::fromValue(*val16));
+                    currentAddress++;
+                } else if (auto* val32 = std::get_if<quint32>(&value)) {
+                    valueItem->setText(QString::number(*val32));
+                    valueItem->setData(Qt::UserRole, QVariant::fromValue(*val32));
+                    currentAddress += 2;
+                }
+            }
+        }
     }
 }
 
@@ -149,10 +176,10 @@ void BlockTableForm::showDetails(int address)
     ui->detailTableWidget->resizeRowsToContents();
     m_detailTableConnection = connect(ui->detailTableWidget->horizontalHeader(), &QHeaderView::sectionResized,
                                       this, [this](int logicalIndex, int /*oldSize*/, int /*newSize*/) {
-        Q_UNUSED(logicalIndex);
-        ui->detailTableWidget->resizeRowsToContents();
-        ui->detailTableWidget->viewport()->update();
-    });
+                                          Q_UNUSED(logicalIndex);
+                                          ui->detailTableWidget->resizeRowsToContents();
+                                          ui->detailTableWidget->viewport()->update();
+                                      });
 
     // qDebug() << ui->blockTableWidget->item(m_addressToRow[address], 2)->data(Qt::UserRole);
 }
@@ -208,38 +235,38 @@ void BlockTableForm::populateBlockTable()
 void BlockTableForm::fillLaserControlBoardStatus()
 {
     m_blockStatusEntries = {
-        { LaserControlBoardStatusBits::HeaterStatus,                            tr("Состояние нагревателя") },
-        { LaserControlBoardStatusBits::TempOfCase_1BelowMinLimit,               tr("Температура корпуса №1 ниже минимальной предельной") },
-        { LaserControlBoardStatusBits::TempOfCase_1AboveMaxLimit,               tr("Температура корпуса №1 выше максимальной предельной") },
-        { LaserControlBoardStatusBits::TempOfCase_2BelowMinLimit,               tr("Температура корпуса №2 ниже минимальной предельной") },
-        { LaserControlBoardStatusBits::TempOfCase_2AboveMaxLimit,               tr("Температура корпуса №2 выше максимальной предельной") },
-        { LaserControlBoardStatusBits::TempOfCool_1BelowMinLimit,               tr("Температура охладителя №1 ниже минимальной предельной") },
-        { LaserControlBoardStatusBits::TempOfCool_1AboveMaxLimit,               tr("Температура охладителя №1 выше максимальной предельной") },
-        { LaserControlBoardStatusBits::TempOfCool_2BelowMinLimit,               tr("Температура охладителя №2 ниже минимальной предельной") },
-        { LaserControlBoardStatusBits::TempOfCool_2AboveMaxLimit,               tr("Температура охладителя №2 выше максимальной предельной") },
-        { LaserControlBoardStatusBits::CoolFlowRate_1BelowMinLimit,             tr("Расход охладителя №1 ниже предельного значения") },
-        { LaserControlBoardStatusBits::CoolFlowRate_1AboveMaxLimit,             tr("Расход охладителя №1 выше предельного значения") },
-        { LaserControlBoardStatusBits::CoolFlowRate_2BelowMinLimit,             tr("Расход охладителя №2 ниже предельного значения") },
-        { LaserControlBoardStatusBits::CoolFlowRate_2AboveMaxLimit,             tr("Расход охладителя №2 выше предельного значения") },
-        { LaserControlBoardStatusBits::CoolFlowRate_3BelowMinLimit,             tr("Расход охладителя №3 ниже предельного значения") },
-        { LaserControlBoardStatusBits::CoolFlowRate_3AboveMaxLimit,             tr("Расход охладителя №3 выше предельного значения") },
-        { LaserControlBoardStatusBits::AirHumidity_1BelowMinLimit,              tr("Влажность воздуха №1 ниже минимальной предельной") },
-        { LaserControlBoardStatusBits::AirHumidity_1AboveMaxLimit,              tr("Влажность воздуха №1 выше максимальной предельной") },
-        { LaserControlBoardStatusBits::AirTemperature_1BelowMinLimit,           tr("Температура воздуха №1 ниже минимальной предельной") },
-        { LaserControlBoardStatusBits::AirTemperature_1AboveMaxLimit,           tr("Температура воздуха №1 выше максимальной предельной") },
-        { LaserControlBoardStatusBits::AirHumidity_2BelowMinLimit,              tr("Влажность воздуха №2 ниже минимальной предельной") },
-        { LaserControlBoardStatusBits::AirHumidity_2AboveMaxLimit,              tr("Влажность воздуха №2 выше максимальной предельной") },
-        { LaserControlBoardStatusBits::AirTemperature_2BelowMinLimit,           tr("Температура воздуха №2 ниже минимальной предельной") },
-        { LaserControlBoardStatusBits::AirTemperature_2AboveMaxLimit,           tr("Температура воздуха №2 выше максимальной предельной") },
-        { LaserControlBoardStatusBits::PowerLaser_2BelowMinLimit,               tr("Мощность лазера ниже установленной") },
-        { LaserControlBoardStatusBits::PowerLaser_2AboveMaxLimit,               tr("Мощность лазера выше установленной") },
-        { LaserControlBoardStatusBits::LaserWorkMode_1Bit,                      tr("Режим работы лазера") },
-        { LaserControlBoardStatusBits::SignalIsGood,                            tr("Сигнал «Исправен»") },
-        { LaserControlBoardStatusBits::SignalIsReady,                           tr("Сигнал «Готов»") },
-        { LaserControlBoardStatusBits::StateOfMasterOscillatorPumpSyncPulse,    tr("Состояние синхроимпульса накачки задающего генератора") },
-        { LaserControlBoardStatusBits::StateOfAmplifierPumpSyncPulse,           tr("Состояние синхроимпульса накачки усилителей") },
-        { LaserControlBoardStatusBits::StateOfRadiationGenerationSyncPulse,     tr("Состояние синхроимпульса генерации излучения") },
-    };
+                            { LaserControlBoardStatusBits::HeaterStatus,                            tr("Состояние нагревателя") },
+                            { LaserControlBoardStatusBits::TempOfCase_1BelowMinLimit,               tr("Температура корпуса №1 ниже минимальной предельной") },
+                            { LaserControlBoardStatusBits::TempOfCase_1AboveMaxLimit,               tr("Температура корпуса №1 выше максимальной предельной") },
+                            { LaserControlBoardStatusBits::TempOfCase_2BelowMinLimit,               tr("Температура корпуса №2 ниже минимальной предельной") },
+                            { LaserControlBoardStatusBits::TempOfCase_2AboveMaxLimit,               tr("Температура корпуса №2 выше максимальной предельной") },
+                            { LaserControlBoardStatusBits::TempOfCool_1BelowMinLimit,               tr("Температура охладителя №1 ниже минимальной предельной") },
+                            { LaserControlBoardStatusBits::TempOfCool_1AboveMaxLimit,               tr("Температура охладителя №1 выше максимальной предельной") },
+                            { LaserControlBoardStatusBits::TempOfCool_2BelowMinLimit,               tr("Температура охладителя №2 ниже минимальной предельной") },
+                            { LaserControlBoardStatusBits::TempOfCool_2AboveMaxLimit,               tr("Температура охладителя №2 выше максимальной предельной") },
+                            { LaserControlBoardStatusBits::CoolFlowRate_1BelowMinLimit,             tr("Расход охладителя №1 ниже предельного значения") },
+                            { LaserControlBoardStatusBits::CoolFlowRate_1AboveMaxLimit,             tr("Расход охладителя №1 выше предельного значения") },
+                            { LaserControlBoardStatusBits::CoolFlowRate_2BelowMinLimit,             tr("Расход охладителя №2 ниже предельного значения") },
+                            { LaserControlBoardStatusBits::CoolFlowRate_2AboveMaxLimit,             tr("Расход охладителя №2 выше предельного значения") },
+                            { LaserControlBoardStatusBits::CoolFlowRate_3BelowMinLimit,             tr("Расход охладителя №3 ниже предельного значения") },
+                            { LaserControlBoardStatusBits::CoolFlowRate_3AboveMaxLimit,             tr("Расход охладителя №3 выше предельного значения") },
+                            { LaserControlBoardStatusBits::AirHumidity_1BelowMinLimit,              tr("Влажность воздуха №1 ниже минимальной предельной") },
+                            { LaserControlBoardStatusBits::AirHumidity_1AboveMaxLimit,              tr("Влажность воздуха №1 выше максимальной предельной") },
+                            { LaserControlBoardStatusBits::AirTemperature_1BelowMinLimit,           tr("Температура воздуха №1 ниже минимальной предельной") },
+                            { LaserControlBoardStatusBits::AirTemperature_1AboveMaxLimit,           tr("Температура воздуха №1 выше максимальной предельной") },
+                            { LaserControlBoardStatusBits::AirHumidity_2BelowMinLimit,              tr("Влажность воздуха №2 ниже минимальной предельной") },
+                            { LaserControlBoardStatusBits::AirHumidity_2AboveMaxLimit,              tr("Влажность воздуха №2 выше максимальной предельной") },
+                            { LaserControlBoardStatusBits::AirTemperature_2BelowMinLimit,           tr("Температура воздуха №2 ниже минимальной предельной") },
+                            { LaserControlBoardStatusBits::AirTemperature_2AboveMaxLimit,           tr("Температура воздуха №2 выше максимальной предельной") },
+                            { LaserControlBoardStatusBits::PowerLaser_2BelowMinLimit,               tr("Мощность лазера ниже установленной") },
+                            { LaserControlBoardStatusBits::PowerLaser_2AboveMaxLimit,               tr("Мощность лазера выше установленной") },
+                            { LaserControlBoardStatusBits::LaserWorkMode_1Bit,                      tr("Режим работы лазера") },
+                            { LaserControlBoardStatusBits::SignalIsGood,                            tr("Сигнал «Исправен»") },
+                            { LaserControlBoardStatusBits::SignalIsReady,                           tr("Сигнал «Готов»") },
+                            { LaserControlBoardStatusBits::StateOfMasterOscillatorPumpSyncPulse,    tr("Состояние синхроимпульса накачки задающего генератора") },
+                            { LaserControlBoardStatusBits::StateOfAmplifierPumpSyncPulse,           tr("Состояние синхроимпульса накачки усилителей") },
+                            { LaserControlBoardStatusBits::StateOfRadiationGenerationSyncPulse,     tr("Состояние синхроимпульса генерации излучения") },
+                            };
 }
 
 void BlockTableForm::fillGeneratorSetterStatus()
@@ -363,7 +390,7 @@ void BlockTableForm::insertRowBlockStatus(const BlockStatusEntry &entry)
     ui->detailTableWidget->setItem(row, 2, valueItem);
 }
 
-void BlockTableForm::requestAllValues() const
+void BlockTableForm::requestValueByValue() const
 {
     if (!m_modbusClient) {
         return;
@@ -378,14 +405,35 @@ void BlockTableForm::requestAllValues() const
                                       }
                                       client->readHoldingRegisters(address,
                                                                    address == BlockTableAddress::LaserControlBoardStatus ||
-                                                                    address == BlockTableAddress::PowerSupplyControlStatus ? 2 : 1);
+                                                                           address == BlockTableAddress::PowerSupplyControlStatus ? 2 : 1);
                                   },
                                   Qt::QueuedConnection);
     }
 }
 
+void BlockTableForm::requestAllValues() const
+{
+    if (!m_modbusClient) {
+        return;
+    }
+
+    // Read all registers in one call
+    const int startAddress = BlockTableAddress::LaserControlBoardStatus;
+    const int registerCount = BlockTableAddress::AddressTillOfEndBlocks - startAddress; // 0x11e-0x12c
+
+    QMetaObject::invokeMethod(m_modbusClient,
+                              [client = m_modbusClient, startAddress, registerCount]() {
+                                  if (!client) {
+                                      return;
+                                  }
+                                  client->readHoldingRegisters(startAddress, registerCount);
+                              },
+                              Qt::QueuedConnection);
+}
+
 void BlockTableForm::on_pushButton_clicked()
 {
     requestAllValues();
+    // requestValueByValue();
 }
 

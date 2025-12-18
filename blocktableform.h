@@ -28,6 +28,7 @@ public:
     QList<int> getSplitterSizes();
     void setSplitterSizes(const QList<int> &);
 
+    void requestValueByValue() const;
     void requestAllValues() const override;
 
 private slots:

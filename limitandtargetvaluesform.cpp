@@ -197,7 +197,7 @@ void LimitAndTargetValuesForm::requestAllValues() const
     // Read all registers in one call
     const int startAddress = ValuesTableAddress::CaseTemperatureMinValue_1;
     const int registerCount =
-        ValuesTableAddress::AddressTillOfEndValues - startAddress; // 0x200-0x240 (6 registers total)
+        ValuesTableAddress::AddressTillOfEndValues - startAddress; // 0x200-0x240
 
     QMetaObject::invokeMethod(m_modbusClient,
                               [client = m_modbusClient, startAddress, registerCount]() {

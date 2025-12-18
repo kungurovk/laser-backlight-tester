@@ -56,6 +56,7 @@ enum BlockTableAddress
     PowerSupplyQuantumtronsStatus_8  = 0x129,
     PowerSupplyQuantumtronsStatus_9  = 0x12a,
     PowerSupplyQuantumtronsStatus_10 = 0x12b,
+    AddressTillOfEndBlocks           = 0x12c
 };
 
 enum ValuesTableAddress

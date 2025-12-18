@@ -230,6 +230,9 @@ void DockManager::addSensorTableWidget()
     auto *dock = createDockFor(sensors, tr("Показания датчиков"));
     dock->show();
     updateActionChecks();
+
+    if(m_modbusClient)
+        sensors->setModbusClient(m_modbusClient);
 }
 
 void DockManager::addBlockTableWidget()
@@ -238,6 +241,9 @@ void DockManager::addBlockTableWidget()
     auto *dock = createDockFor(block, tr("Статусы блоков"));
     dock->show();
     updateActionChecks();
+
+    if(m_modbusClient)
+        block->setModbusClient(m_modbusClient);
 }
 
 void DockManager::addModeControlWidget()
@@ -255,6 +261,9 @@ void DockManager::addValuesWidget()
     auto *dock = createDockFor(valuesForm, "Предельные и целевые значения");
     dock->show();
     updateActionChecks();
+
+    if(m_modbusClient)
+        valuesForm->setModbusClient(m_modbusClient);
 }
 
 void DockManager::addGeneratorWidget()
@@ -263,6 +272,9 @@ void DockManager::addGeneratorWidget()
     auto *dock = createDockFor(generatorForm, "Задающий генератор");
     dock->show();
     updateActionChecks();
+
+    if(m_modbusClient)
+        generatorForm->setModbusClient(m_modbusClient);
 }
 
 void DockManager::toggleConnect(bool /*on*/)

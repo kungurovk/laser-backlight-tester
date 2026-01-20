@@ -14,6 +14,7 @@ class QListWidget;
 class QAction;
 class QWidget;
 class QSettings;
+class QLabel;
 
 class DockManager : public QMainWindow
 {
@@ -71,6 +72,7 @@ private:
     QMenu *m_windowMenu = nullptr;
     QToolBar *m_mainToolbar = nullptr;
     QPushButton *m_buttonConnect = nullptr;
+    QLabel *m_connectionStatusLabel = nullptr;
     QAction *m_actAddSensorTable = nullptr;
     QAction *m_actAddBlockTable = nullptr;
     QAction *m_actAddModeControl = nullptr;

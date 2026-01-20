@@ -9,7 +9,6 @@
 #include <QDockWidget>
 #include <QMenuBar>
 #include <QToolBar>
-#include <QStatusBar>
 #include <QTextEdit>
 #include <QListWidget>
 #include <QLabel>
@@ -177,7 +176,28 @@ void DockManager::createMenusAndToolbars()
     m_buttonConnect = new QPushButton;
     connect(m_buttonConnect, &QPushButton::clicked, this, &DockManager::toggleConnect);
     // m_mainToolbar->addWidget(m_buttonConnect);
-    // m_mainToolbar->addSeparator();
+    {
+        m_connectionStatusLabel = new QLabel(this);
+        m_connectionStatusLabel->setMinimumWidth(150);
+        m_connectionStatusLabel->setAlignment(Qt::AlignCenter);
+        m_connectionStatusLabel->setText(tr("Отключено"));
+        m_connectionStatusLabel->setStyleSheet(QStringLiteral(
+            "QLabel {"
+            "  background-color: rgb(255, 85, 85);"
+            "  color: black;"
+            "  border: 1px solid rgba(0,0,0,0.25);"
+            "  border-radius: 4px;"
+            "  padding: 2px 8px;"
+            "  font-weight: 600;"
+            "}"
+            ));
+        m_mainToolbar->addWidget(m_connectionStatusLabel);
+
+        // auto *spacer = new QWidget(this);
+        // spacer->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Preferred);
+        // m_mainToolbar->addWidget(spacer);
+    }
+    m_mainToolbar->addSeparator();
 
     m_mainToolbar->addWidget(new QLabel("Период опроса (сек.)", this));
     auto comboBox = new QComboBox(this);
@@ -203,6 +223,7 @@ void DockManager::createMenusAndToolbars()
     m_mainToolbar->addSeparator();
     // m_mainToolbar->addAction(m_actTile);
     // m_mainToolbar->addAction(m_actCascade);
+
     m_mainToolbar->layout()->setSpacing(5);
 }
 
@@ -301,9 +322,31 @@ void DockManager::onConnectionStateChanged(bool connected)
     if (m_buttonConnect)
         m_buttonConnect->setText(connected ? tr("Отключить") : tr("Подключить"));
 
-    statusBar()->showMessage(connected ? tr("Подключено") : tr("Отключено")/*, 3000*/);
-    statusBar()->setStyleSheet(connected ? "QStatusBar { background-color: rgb(85, 255, 85); }"
-                                         : "QStatusBar { background-color: rgb(255, 85, 85); }");
+    if (m_connectionStatusLabel) {
+        m_connectionStatusLabel->setText(connected ? tr("Подключено") : tr("Отключено"));
+        m_connectionStatusLabel->setStyleSheet(connected
+            ? QStringLiteral(
+                "QLabel {"
+                "  background-color: rgb(85, 255, 85);"
+                "  color: black;"
+                "  border: 1px solid rgba(0,0,0,0.25);"
+                "  border-radius: 4px;"
+                "  padding: 2px 8px;"
+                "  font-weight: 600;"
+                "}"
+            )
+            : QStringLiteral(
+                "QLabel {"
+                "  background-color: rgb(255, 85, 85);"
+                "  color: black;"
+                "  border: 1px solid rgba(0,0,0,0.25);"
+                "  border-radius: 4px;"
+                "  padding: 2px 8px;"
+                "  font-weight: 600;"
+                "}"
+            )
+        );
+    }
 
     if (connected)
         requestAllValues();

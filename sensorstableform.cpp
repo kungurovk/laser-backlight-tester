@@ -67,8 +67,11 @@ void SensorsTableForm::handleReadCompleted(int startAddress, const QVector<quint
         while (valueIndex < values.size()) {
             std::variant<quint16, quint32, float> value;
 
-            if (currentAddress > SensorsTableAddress::CrystalTemperature_2 &&
-                    currentAddress < SensorsTableAddress::LaserWorkTime)
+            if ((currentAddress > SensorsTableAddress::CrystalTemperature_2 &&
+                 currentAddress < SensorsTableAddress::LaserWorkTime) ||
+                currentAddress == SensorsTableAddress::CoolantTemperature_2 ||
+                currentAddress == SensorsTableAddress::AirHumidity_2 ||
+                currentAddress == SensorsTableAddress::AitTemperature_2)
             {
                 currentAddress +=2;
                 valueIndex += 2;
@@ -146,15 +149,15 @@ void SensorsTableForm::populateTable()
         { SensorsTableAddress::LaserOperatingMode,      tr("Режим работы лазера") },
         { SensorsTableAddress::CaseTemperature_1,       tr("Температура корпуса #1") },
         { SensorsTableAddress::CaseTemperature_2,       tr("Температура корпуса #2") },
-        { SensorsTableAddress::CoolantTemperature_1,    tr("Температура охладителя #1") },
-        { SensorsTableAddress::CoolantTemperature_2,    tr("Температура охладителя #2") },
+        { SensorsTableAddress::CoolantTemperature_1,    tr("Температура охладителя") },// #1
+        // { SensorsTableAddress::CoolantTemperature_2,    tr("Температура охладителя #2") },
         { SensorsTableAddress::CoolantFlowRate_1,       tr("Расход охладителя #1") },
         { SensorsTableAddress::CoolantFlowRate_2,       tr("Расход охладителя #2") },
         { SensorsTableAddress::CoolantFlowRate_3,       tr("Расход охладителя #3") },
-        { SensorsTableAddress::AirHumidity_1,           tr("Влажность воздуха #1") },
-        { SensorsTableAddress::AitTemperature_1,        tr("Температура воздуха #1") },
-        { SensorsTableAddress::AirHumidity_2,           tr("Влажность воздуха #2") },
-        { SensorsTableAddress::AitTemperature_2,        tr("Температура воздуха #2") },
+        { SensorsTableAddress::AirHumidity_1,           tr("Влажность воздуха") },// #1
+        { SensorsTableAddress::AitTemperature_1,        tr("Температура воздуха") },// #1
+        // { SensorsTableAddress::AirHumidity_2,           tr("Влажность воздуха #2") },
+        // { SensorsTableAddress::AitTemperature_2,        tr("Температура воздуха #2") },
         { SensorsTableAddress::LaserPower,              tr("Мощность лазера") },
         { SensorsTableAddress::CrystalTemperature_1,    tr("Температура кристалла LBO #1") },
         { SensorsTableAddress::CrystalTemperature_2,    tr("Температура кристалла LBO #2") },

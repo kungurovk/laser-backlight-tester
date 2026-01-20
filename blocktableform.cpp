@@ -13,6 +13,7 @@
 #include <QTableWidgetItem>
 #include <QBitArray>
 #include <QDebug>
+#include <QtEndian>
 
 namespace {
 QString makeAddressString(int address)
@@ -125,7 +126,8 @@ void BlockTableForm::handleReadCompleted(int startAddress, const QVector<quint16
                 value = (quint32(toBigEndian(*(values.data() + valueIndex + 1))) << 16) | toBigEndian(*(values.data() + valueIndex));
                 valueIndex += 2;
             } else {
-                value = toBigEndian(values[valueIndex]);
+                // value = /*toBigEndian(*/values[valueIndex]/*)*/;
+                value = qFromLittleEndian<quint16>(values.data() + valueIndex);
                 valueIndex++;
             }
 
@@ -350,6 +352,7 @@ void BlockTableForm::insertRowBlockStatus(const BlockStatusEntry &entry)
 
     quint32 value = (entry.value.toUInt() >> entry.address) & 1u;
     QString numOfBit = QString::number(entry.address);
+    QString textValue;
     if (m_addressToRow.key(ui->blockTableWidget->currentRow()) == BlockTableAddress::LaserControlBoardStatus)
     {
         if (entry.address == LaserControlBoardStatusBits::LaserWorkMode_1Bit)
@@ -383,9 +386,23 @@ void BlockTableForm::insertRowBlockStatus(const BlockStatusEntry &entry)
     // } else {
     //     value = quint16(values.first());
     // }
+    if (m_addressToRow.key(ui->blockTableWidget->currentRow()) >= BlockTableAddress::PowerSupplyQuantumtronsStatus_1 &&
+            m_addressToRow.key(ui->blockTableWidget->currentRow()) <= BlockTableAddress::PowerSupplyQuantumtronsStatus_10)
+    {
+        if (entry.address == PowerSupplyQuantumtronsStatusBits::PowerSupply)
+            textValue = value ? "включен" : "выключен";
+        else if (entry.address == PowerSupplyQuantumtronsStatusBits::FrequencyModeControl)
+            textValue = value ? "пуск" : "стоп";
+        else if (entry.address == PowerSupplyQuantumtronsStatusBits::Synchronization)
+            textValue = value ? "внешняя" : "внутреняя";
+        else if (entry.address == PowerSupplyQuantumtronsStatusBits::PowerSupplyReadySignal)
+            textValue = value ? "готов" : "не готов";
+    }
+    else
+        textValue = QString::number(value);
     auto *valueItem = new QTableWidgetItem(entry.value.isNull() ?
                                                tr("Н/Д") :
-                                               QString::number(value));
+                                               textValue);
     valueItem->setTextAlignment(Qt::AlignCenter);
     ui->detailTableWidget->setItem(row, 2, valueItem);
 }

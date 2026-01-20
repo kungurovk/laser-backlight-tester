@@ -36,6 +36,7 @@ static QString settingsApp() { return QStringLiteral("Laser Backlight Tester"); 
 DockManager::DockManager(QWidget *parent)
     : QMainWindow{parent}
 {
+
     // createUi();
     m_requestAllTimer = new QTimer(this);
     m_requestAllTimer->setSingleShot(false);
@@ -60,6 +61,10 @@ DockManager::DockManager(QWidget *parent)
     // }
     // Try restore previous session
     restoreLayout();
+
+    // QTimer::singleShot(0, [this]() {
+    //     onConnectionStateChanged(false);
+    // });
 }
 
 void DockManager::setModbusClient(ModbusClient *client)
@@ -171,8 +176,8 @@ void DockManager::createMenusAndToolbars()
     m_mainToolbar->setObjectName(QStringLiteral("MainToolbar"));
     m_buttonConnect = new QPushButton;
     connect(m_buttonConnect, &QPushButton::clicked, this, &DockManager::toggleConnect);
-    m_mainToolbar->addWidget(m_buttonConnect);
-    m_mainToolbar->addSeparator();
+    // m_mainToolbar->addWidget(m_buttonConnect);
+    // m_mainToolbar->addSeparator();
 
     m_mainToolbar->addWidget(new QLabel("Период опроса (сек.)", this));
     auto comboBox = new QComboBox(this);
@@ -199,7 +204,6 @@ void DockManager::createMenusAndToolbars()
     // m_mainToolbar->addAction(m_actTile);
     // m_mainToolbar->addAction(m_actCascade);
     m_mainToolbar->layout()->setSpacing(5);
-
 }
 
 QDockWidget* DockManager::createDockFor(QWidget *content, const QString &title)
@@ -282,8 +286,11 @@ void DockManager::toggleConnect(bool /*on*/)
     if (m_isConnected) {
         emit disconnectFromTcp();
     } else {
-        // emit connectToTcpPort("127.0.0.1", 502);
+#ifdef QT_DEBUG
+        emit connectToTcpPort("127.0.0.1", 502);
+#else
         emit connectToTcpPort("172.16.5.101", 502);
+#endif
     }
 }
 
@@ -294,12 +301,16 @@ void DockManager::onConnectionStateChanged(bool connected)
     if (m_buttonConnect)
         m_buttonConnect->setText(connected ? tr("Отключить") : tr("Подключить"));
 
-    statusBar()->showMessage(connected ? tr("Подключено") : tr("Отключено"), 3000);
+    statusBar()->showMessage(connected ? tr("Подключено") : tr("Отключено")/*, 3000*/);
+    statusBar()->setStyleSheet(connected ? "QStatusBar { background-color: rgb(85, 255, 85); }"
+                                         : "QStatusBar { background-color: rgb(255, 85, 85); }");
 
     if (connected)
-    {
         requestAllValues();
-    }
+    else
+        QTimer::singleShot(1000, [this]() {
+            toggleConnect(false);
+        });
 }
 
 void DockManager::startStopButton()
@@ -555,7 +566,7 @@ void DockManager::saveLayout()
     saveDockContents(s);
     s.setValue("state", saveState());
     s.sync(); // Force sync to registry
-    statusBar()->showMessage(tr("Раскладка сохранена"), 2000);
+    // statusBar()->showMessage(tr("Раскладка сохранена"), 2000);
 }
 
 void DockManager::restoreLayout()
@@ -590,7 +601,7 @@ void DockManager::restoreLayout()
 
     loadDockContents(s);
     restoreState(s.value("state").toByteArray());
-    statusBar()->showMessage(tr("Раскладка восстановлена"), 2000);
+    // statusBar()->showMessage(tr("Раскладка восстановлена"), 2000);
     updateActionChecks();
 }
 

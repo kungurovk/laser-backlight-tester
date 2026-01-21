@@ -41,5 +41,5 @@ ModbusClient *Controller::modbusClient() const
 
 void Controller::sendMessageForMode(Mode mode)
 {
-    emit sendMessage(ModeAddress::Address, toLittleEndian(quint16(mode)));
+    emit sendMessage(ModeAddress::ManualAddress, toLittleEndian(quint16(mode)));
 }

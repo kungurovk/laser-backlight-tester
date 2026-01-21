@@ -71,20 +71,21 @@ void SensorsTableForm::handleReadCompleted(int startAddress, const QVector<quint
                  currentAddress < SensorsTableAddress::LaserWorkTime) ||
                 currentAddress == SensorsTableAddress::CoolantTemperature_2 ||
                 currentAddress == SensorsTableAddress::AirHumidity_2 ||
-                currentAddress == SensorsTableAddress::AitTemperature_2)
+                currentAddress == SensorsTableAddress::AitTemperature_2 ||
+                currentAddress == SensorsTableAddress::BoardOperatingMode)
             {
                 currentAddress +=2;
                 valueIndex += 2;
                 continue;
             }
 
-            if (currentAddress == SensorsTableAddress::BoardOperatingMode ||
+            /*if (currentAddress == SensorsTableAddress::BoardOperatingMode ||
                 currentAddress == SensorsTableAddress::LaserOperatingMode)
             {
                 value = toBigEndian(values[valueIndex]);
                 valueIndex++;
             }
-            else if (currentAddress == SensorsTableAddress::LaserWorkTime)
+            else */if (currentAddress == SensorsTableAddress::LaserWorkTime)
             {
                 value = (quint32(toBigEndian(*(values.data() + valueIndex + 1))) << 16) |
                         toBigEndian(*(values.data() + valueIndex));
@@ -145,8 +146,8 @@ void SensorsTableForm::setupTable()
 void SensorsTableForm::populateTable()
 {
     m_entries = {
-        { SensorsTableAddress::BoardOperatingMode,      tr("Режим работы платы управления лазером") },
-        { SensorsTableAddress::LaserOperatingMode,      tr("Режим работы лазера") },
+        // { SensorsTableAddress::BoardOperatingMode,      tr("Режим работы платы управления лазером") },
+        // { SensorsTableAddress::LaserOperatingMode,      tr("Режим работы лазера") },
         { SensorsTableAddress::CaseTemperature_1,       tr("Температура корпуса #1") },
         { SensorsTableAddress::CaseTemperature_2,       tr("Температура корпуса #2") },
         { SensorsTableAddress::CoolantTemperature_1,    tr("Температура охладителя") },// #1
@@ -220,7 +221,7 @@ void SensorsTableForm::requestAllValues() const
     }
 
     // Read all registers in one call
-    const int startAddress = SensorsTableAddress::BoardOperatingMode;
+    const int startAddress = SensorsTableAddress::CaseTemperature_1;
     const int registerCount = SensorsTableAddress::AddressTillOfEndSensors - startAddress; // 0x100-0x12e
 
     QMetaObject::invokeMethod(m_modbusClient,

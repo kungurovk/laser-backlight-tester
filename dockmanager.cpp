@@ -278,6 +278,9 @@ void DockManager::addModeControlWidget()
     auto *dock = createDockFor(modeControlForm, "Управление режимами");
     dock->show();
     updateActionChecks();
+
+    if(m_modbusClient)
+        modeControlForm->setModbusClient(m_modbusClient);
 }
 
 void DockManager::addValuesWidget()

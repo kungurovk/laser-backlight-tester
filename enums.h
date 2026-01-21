@@ -10,9 +10,13 @@ enum Mode : unsigned short
     Work    = 0x04,
 };
 
-enum ModeAddress
+enum ModeAddress : unsigned short
 {
-    Address = 0x00,
+    ManualAddress   = 0x00,
+    AutoAddress     = 0x01,
+    DutyAddress     = 0x02,
+    PrepareAddress  = 0x03,
+    WorkAddress     = 0x04,
 };
 
 enum States : unsigned short

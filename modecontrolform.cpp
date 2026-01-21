@@ -67,7 +67,7 @@ void ModeControlForm::handleReadCompleted(int startAddress, const QVector<quint1
         while (valueIndex < values.size()) {
             quint16 value;
             value = toBigEndian(values[valueIndex]);
-            qDebug() << "value" << value;
+            // qDebug() << "value" << value;
 
             if (currentAddress == SensorsTableAddress::BoardOperatingMode)
             {

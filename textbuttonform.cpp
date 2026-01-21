@@ -28,3 +28,10 @@ void TextButtonForm::setOnButton(bool flag)
     m_isON ? ui->onOffPushButton->setText("Выключить") : ui->onOffPushButton->setText("Включить");
     sendState(m_isON);
 }
+
+void TextButtonForm::setOnButtonSilent(bool flag)
+{
+    m_isON = flag;
+    m_isON ? ui->onOffPushButton->setText("Выключить") : ui->onOffPushButton->setText("Включить");
+    // Don't emit signal when updating from external data
+}

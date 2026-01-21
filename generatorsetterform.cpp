@@ -46,6 +46,8 @@ void GeneratorSetterForm::setModbusClient(ModbusClient *client)
     if (m_modbusClient) {
         disconnect(m_modbusClient, &ModbusClient::readCompleted,
                    this, &GeneratorSetterForm::handleReadCompleted);
+        disconnect(m_modbusClient, &ModbusClient::writeCompleted,
+                   this, &GeneratorSetterForm::handleWriteCompleted);
     }
 
     m_modbusClient = client;
@@ -53,6 +55,8 @@ void GeneratorSetterForm::setModbusClient(ModbusClient *client)
     if (m_modbusClient) {
         connect(m_modbusClient, &ModbusClient::readCompleted,
                 this, &GeneratorSetterForm::handleReadCompleted);
+        connect(m_modbusClient, &ModbusClient::writeCompleted,
+                this, &GeneratorSetterForm::handleWriteCompleted);
         // requestAllValues();
     }
 }
@@ -124,7 +128,7 @@ void GeneratorSetterForm::handleReadCompleted(int startAddress, const QVector<qu
                 if (auto* val16 = std::get_if<quint16>(&value)) {
                     TextButtonForm *textButtonItem = qobject_cast<TextButtonForm*>(ui->generatorTableWidget->cellWidget(row, 1));
                     if (textButtonItem) {
-                        textButtonItem->setOnButton(*val16 ? true : false);
+                        textButtonItem->setOnButtonSilent(*val16 ? true : false);
                     }
                     valueItem->setText(QString::number(*val16));
                     valueItem->setData(Qt::UserRole, QVariant::fromValue(*val16));
@@ -135,6 +139,19 @@ void GeneratorSetterForm::handleReadCompleted(int startAddress, const QVector<qu
                     currentAddress += 2;
                 }
             }
+        }
+    }
+}
+
+void GeneratorSetterForm::handleWriteCompleted(int startAddress, quint16 numberOfEntries)
+{
+    Q_UNUSED(numberOfEntries);
+    // Check if this write was for one of our addresses
+    for (const auto &entry : m_entries) {
+        if (entry.address == startAddress) {
+            // Refresh all values after a successful write
+            requestAllValues();
+            break;
         }
     }
 }

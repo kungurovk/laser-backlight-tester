@@ -17,6 +17,7 @@ public:
 
     void setText(const QString &text);
     void setOnButton(bool flag);
+    void setOnButtonSilent(bool flag); // Set button state without emitting signal
 
 signals:
     void sendState(bool value);

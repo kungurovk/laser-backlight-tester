@@ -23,6 +23,7 @@ public:
 
 private slots:
     void handleReadCompleted(int startAddress, const QVector<quint16> &values);
+    void handleWriteCompleted(int startAddress, quint16 numberOfEntries);
     void sendState(int address, bool value);
 
     void on_pushButton_clicked();

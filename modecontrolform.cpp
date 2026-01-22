@@ -19,8 +19,6 @@ ModeControlForm::ModeControlForm(QWidget *parent)
     const auto wireModeButton = [this](QPushButton *button, ModeAddress address) {
         connect(button, &QPushButton::clicked, this, [this, address] {
             sendState(address, true);
-
-            QTimer::singleShot(100, this, &ModeControlForm::requestAllValues);//переделать
         });
     };
 
@@ -45,6 +43,8 @@ void ModeControlForm::setModbusClient(ModbusClient *client)
     if (m_modbusClient) {
         disconnect(m_modbusClient, &ModbusClient::readCompleted,
                    this, &ModeControlForm::handleReadCompleted);
+        disconnect(m_modbusClient, &ModbusClient::writeCompleted,
+                   this, &ModeControlForm::handleWriteCompleted);
     }
 
     m_modbusClient = client;
@@ -52,7 +52,20 @@ void ModeControlForm::setModbusClient(ModbusClient *client)
     if (m_modbusClient) {
         connect(m_modbusClient, &ModbusClient::readCompleted,
                 this, &ModeControlForm::handleReadCompleted);
+        connect(m_modbusClient, &ModbusClient::writeCompleted,
+                this, &ModeControlForm::handleWriteCompleted);
         // requestAllValues();
+    }
+}
+
+void ModeControlForm::handleWriteCompleted(int startAddress, quint16 numberOfEntries)
+{
+    Q_UNUSED(numberOfEntries);
+    // Check if this write was for one of our addresses
+    if (startAddress >= ModeAddress::ManualAddress && startAddress <= WorkAddress)
+    {
+        // Refresh all values after a successful write
+        requestAllValues();
     }
 }
 

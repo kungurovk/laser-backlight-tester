@@ -83,7 +83,7 @@ void SensorsTableForm::handleReadCompleted(int startAddress, const QVector<quint
                 currentAddress == SensorsTableAddress::FrequencyIncomingSyncPulses_2 ||
                 currentAddress == SensorsTableAddress::FrequencyIncomingSyncPulses_3)
             {
-                value = toBigEndian(values[valueIndex]);
+                value = /*toBigEndian(*/values[valueIndex]/*)*/;
                 valueIndex++;
             }
             else if (currentAddress == SensorsTableAddress::LaserWorkTime)

@@ -65,6 +65,8 @@ private:
     QString detectDockType(QWidget *content) const;
     QWidget* createWidgetFromType(const QString &typeName, const QVariant &payload);
     void requestAllValues();
+    void startReconnectionAttempts();
+    void attemptReconnection();
 
 private:
     QMenu *m_fileMenu = nullptr;
@@ -90,6 +92,9 @@ private:
     QTimer *m_requestAllTimer = nullptr;
     bool m_isStartedPool = false;
     QPushButton *m_startStopButton = nullptr;
+    QTimer *m_reconnectionTimer = nullptr;
+    int m_reconnectionAttempts = 0;
+    const int MAX_RECONNECTION_ATTEMPTS = 10;
 };
 
 #endif // DOCKMANAGER_H

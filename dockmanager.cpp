@@ -44,6 +44,12 @@ DockManager::DockManager(QWidget *parent)
         requestAllValues();
     });
 
+    m_reconnectionTimer = new QTimer(this);
+    m_reconnectionTimer->setSingleShot(true);
+    connect(m_reconnectionTimer, &QTimer::timeout, [this](){
+        attemptReconnection();
+    });
+
     createActions();
     createMenusAndToolbars();
 
@@ -351,12 +357,14 @@ void DockManager::onConnectionStateChanged(bool connected)
         );
     }
 
-    if (connected)
+    if (connected) {
+        // При успешном подключении сбрасываем счетчик попыток
+        m_reconnectionAttempts = 0;
         requestAllValues();
-    else
-        QTimer::singleShot(1000, [this]() {
-            toggleConnect(false);
-        });
+    } else {
+        // При разрыве соединения начинаем попытки переподключения
+        startReconnectionAttempts();
+    }
 }
 
 void DockManager::startStopButton()
@@ -697,6 +705,48 @@ void DockManager::relayoutGrid(bool cascade)
         dock->show();
         ++index;
     }
+}
+
+void DockManager::startReconnectionAttempts()
+{
+    // Останавливаем предыдущий таймер, если он активен
+    if (m_reconnectionTimer->isActive()) {
+        m_reconnectionTimer->stop();
+    }
+
+    // Если превысили максимальное количество попыток, прекращаем
+    if (m_reconnectionAttempts >= MAX_RECONNECTION_ATTEMPTS) {
+        qWarning() << "Превышено максимальное количество попыток переподключения:" << MAX_RECONNECTION_ATTEMPTS;
+        return;
+    }
+
+    m_reconnectionAttempts++;
+
+    // Экспоненциальная задержка: 1s, 2s, 4s, 8s, 16s
+    int delayMs = 1000 * (1 << (m_reconnectionAttempts - 1));
+
+    qDebug() << "Попытка переподключения" << m_reconnectionAttempts << "из" << MAX_RECONNECTION_ATTEMPTS
+             << "через" << delayMs << "мс";
+
+    m_reconnectionTimer->start(delayMs);
+}
+
+void DockManager::attemptReconnection()
+{
+    // Проверяем, не подключены ли мы уже
+    if (m_isConnected) {
+        m_reconnectionAttempts = 0; // Сбрасываем счетчик при успешном подключении
+        return;
+    }
+
+    // Если превысили максимальное количество попыток, прекращаем
+    if (m_reconnectionAttempts >= MAX_RECONNECTION_ATTEMPTS) {
+        qWarning() << "Превышено максимальное количество попыток переподключения";
+        return;
+    }
+
+    qDebug() << "Выполняем попытку переподключения" << m_reconnectionAttempts;
+    toggleConnect(false);
 }
 
 void DockManager::closeEvent(QCloseEvent *event)

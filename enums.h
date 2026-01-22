@@ -27,24 +27,27 @@ enum States : unsigned short
 
 enum SensorsTableAddress
 {
-    BoardOperatingMode      = 0x100,
-    LaserOperatingMode      = 0x101,
-    CaseTemperature_1       = 0x102,
-    CaseTemperature_2       = 0x104,
-    CoolantTemperature_1    = 0x106,
-    CoolantTemperature_2    = 0x108,
-    CoolantFlowRate_1       = 0x10a,
-    CoolantFlowRate_2       = 0x10c,
-    CoolantFlowRate_3       = 0x10e,
-    AirHumidity_1           = 0x110,
-    AitTemperature_1        = 0x112,
-    AirHumidity_2           = 0x114,
-    AitTemperature_2        = 0x116,
-    LaserPower              = 0x118,
-    CrystalTemperature_1    = 0x11a,
-    CrystalTemperature_2    = 0x11c,
-    LaserWorkTime           = 0x12c,
-    AddressTillOfEndSensors = 0x12e
+    FrequencyIncomingSyncPulses_1   = 0x010,
+    FrequencyIncomingSyncPulses_2   = 0x012,
+    FrequencyIncomingSyncPulses_3   = 0x014,
+    BoardOperatingMode              = 0x100,
+    LaserOperatingMode              = 0x101,
+    CaseTemperature_1               = 0x102,
+    CaseTemperature_2               = 0x104,
+    CoolantTemperature_1            = 0x106,
+    CoolantTemperature_2            = 0x108,
+    CoolantFlowRate_1               = 0x10a,
+    CoolantFlowRate_2               = 0x10c,
+    CoolantFlowRate_3               = 0x10e,
+    AirHumidity_1                   = 0x110,
+    AitTemperature_1                = 0x112,
+    AirHumidity_2                   = 0x114,
+    AitTemperature_2                = 0x116,
+    LaserPower                      = 0x118,
+    CrystalTemperature_1            = 0x11a,
+    CrystalTemperature_2            = 0x11c,
+    LaserWorkTime                   = 0x12c,
+    AddressTillOfEndSensors         = 0x12e
 };
 
 enum BlockTableAddress

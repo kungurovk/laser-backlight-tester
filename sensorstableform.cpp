@@ -79,13 +79,14 @@ void SensorsTableForm::handleReadCompleted(int startAddress, const QVector<quint
                 continue;
             }
 
-            /*if (currentAddress == SensorsTableAddress::BoardOperatingMode ||
-                currentAddress == SensorsTableAddress::LaserOperatingMode)
+            if (currentAddress == SensorsTableAddress::FrequencyIncomingSyncPulses_1 ||
+                currentAddress == SensorsTableAddress::FrequencyIncomingSyncPulses_2 ||
+                currentAddress == SensorsTableAddress::FrequencyIncomingSyncPulses_3)
             {
                 value = toBigEndian(values[valueIndex]);
                 valueIndex++;
             }
-            else */if (currentAddress == SensorsTableAddress::LaserWorkTime)
+            else if (currentAddress == SensorsTableAddress::LaserWorkTime)
             {
                 value = (quint32(toBigEndian(*(values.data() + valueIndex + 1))) << 16) |
                         toBigEndian(*(values.data() + valueIndex));
@@ -146,23 +147,26 @@ void SensorsTableForm::setupTable()
 void SensorsTableForm::populateTable()
 {
     m_entries = {
-        // { SensorsTableAddress::BoardOperatingMode,      tr("Режим работы платы управления лазером") },
-        // { SensorsTableAddress::LaserOperatingMode,      tr("Режим работы лазера") },
-        { SensorsTableAddress::CaseTemperature_1,       tr("Температура корпуса #1") },
-        { SensorsTableAddress::CaseTemperature_2,       tr("Температура корпуса #2") },
-        { SensorsTableAddress::CoolantTemperature_1,    tr("Температура охладителя") },// #1
-        // { SensorsTableAddress::CoolantTemperature_2,    tr("Температура охладителя #2") },
-        { SensorsTableAddress::CoolantFlowRate_1,       tr("Расход охладителя #1") },
-        { SensorsTableAddress::CoolantFlowRate_2,       tr("Расход охладителя #2") },
-        { SensorsTableAddress::CoolantFlowRate_3,       tr("Расход охладителя #3") },
-        { SensorsTableAddress::AirHumidity_1,           tr("Влажность воздуха") },// #1
-        { SensorsTableAddress::AitTemperature_1,        tr("Температура воздуха") },// #1
-        // { SensorsTableAddress::AirHumidity_2,           tr("Влажность воздуха #2") },
-        // { SensorsTableAddress::AitTemperature_2,        tr("Температура воздуха #2") },
-        { SensorsTableAddress::LaserPower,              tr("Мощность лазера") },
-        { SensorsTableAddress::CrystalTemperature_1,    tr("Температура кристалла LBO #1") },
-        { SensorsTableAddress::CrystalTemperature_2,    tr("Температура кристалла LBO #2") },
-        { SensorsTableAddress::LaserWorkTime,           tr("Время наработки лазера (кол-во импульсов)") }
+                 { SensorsTableAddress::FrequencyIncomingSyncPulses_1,  tr("Частота входящих синхроимпульсов #1") },
+                 { SensorsTableAddress::FrequencyIncomingSyncPulses_2,  tr("Частота входящих синхроимпульсов #2") },
+                 { SensorsTableAddress::FrequencyIncomingSyncPulses_3,  tr("Частота входящих синхроимпульсов #3") },
+                 // { SensorsTableAddress::BoardOperatingMode,      tr("Режим работы платы управления лазером") },
+                 // { SensorsTableAddress::LaserOperatingMode,      tr("Режим работы лазера") },
+                 { SensorsTableAddress::CaseTemperature_1,       tr("Температура корпуса #1") },
+                 { SensorsTableAddress::CaseTemperature_2,       tr("Температура корпуса #2") },
+                 { SensorsTableAddress::CoolantTemperature_1,    tr("Температура охладителя") },// #1
+                 // { SensorsTableAddress::CoolantTemperature_2,    tr("Температура охладителя #2") },
+                 { SensorsTableAddress::CoolantFlowRate_1,       tr("Расход охладителя #1") },
+                 { SensorsTableAddress::CoolantFlowRate_2,       tr("Расход охладителя #2") },
+                 { SensorsTableAddress::CoolantFlowRate_3,       tr("Расход охладителя #3") },
+                 { SensorsTableAddress::AirHumidity_1,           tr("Влажность воздуха") },// #1
+                 { SensorsTableAddress::AitTemperature_1,        tr("Температура воздуха") },// #1
+                 // { SensorsTableAddress::AirHumidity_2,           tr("Влажность воздуха #2") },
+                 // { SensorsTableAddress::AitTemperature_2,        tr("Температура воздуха #2") },
+                 { SensorsTableAddress::LaserPower,              tr("Мощность лазера") },
+                 { SensorsTableAddress::CrystalTemperature_1,    tr("Температура кристалла LBO #1") },
+                 { SensorsTableAddress::CrystalTemperature_2,    tr("Температура кристалла LBO #2") },
+                 { SensorsTableAddress::LaserWorkTime,           tr("Время наработки лазера (кол-во импульсов)") }
     };
 
     for (const auto &entry : m_entries) {
@@ -230,6 +234,9 @@ void SensorsTableForm::requestAllValues() const
                                       return;
                                   }
                                   client->readHoldingRegisters(startAddress, registerCount);
+                                  client->readHoldingRegisters(SensorsTableAddress::FrequencyIncomingSyncPulses_1, 1);
+                                  client->readHoldingRegisters(SensorsTableAddress::FrequencyIncomingSyncPulses_2, 1);
+                                  client->readHoldingRegisters(SensorsTableAddress::FrequencyIncomingSyncPulses_3, 1);
                               },
                               Qt::QueuedConnection);
 }

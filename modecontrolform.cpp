@@ -19,6 +19,28 @@ ModeControlForm::ModeControlForm(QWidget *parent)
     const auto wireModeButton = [this](QPushButton *button, ModeAddress address) {
         connect(button, &QPushButton::clicked, this, [this, address] {
             sendState(address, true);
+            switch (address) {
+            case ModeAddress::AutoAddress:
+                sendState(ModeAddress::ManualAddress, false);
+                break;
+            case ModeAddress::ManualAddress:
+                sendState(ModeAddress::AutoAddress, false);
+                break;
+            case ModeAddress::DutyAddress:
+                sendState(ModeAddress::PrepareAddress, false);
+                sendState(ModeAddress::WorkAddress, false);
+                break;
+            case ModeAddress::PrepareAddress:
+                sendState(ModeAddress::DutyAddress, false);
+                sendState(ModeAddress::WorkAddress, false);
+                break;
+            case ModeAddress::WorkAddress:
+                sendState(ModeAddress::DutyAddress, false);
+                sendState(ModeAddress::PrepareAddress, false);
+                break;
+            default:
+                break;
+            }
         });
     };
 
@@ -62,9 +84,11 @@ void ModeControlForm::handleWriteCompleted(int startAddress, quint16 numberOfEnt
 {
     Q_UNUSED(numberOfEntries);
     // Check if this write was for one of our addresses
-    if (startAddress >= ModeAddress::ManualAddress && startAddress <= WorkAddress)
+    if (startAddress >= ModeAddress::ManualAddress &&
+        startAddress <= ModeAddress::WorkAddress)
     {
         // Refresh all values after a successful write
+        qDebug() << "requestAllValues()";
         requestAllValues();
     }
 }
@@ -129,7 +153,8 @@ void ModeControlForm::sendState(int address, bool value)
                                       return;
                                   }
                                   client->writeSingleRegister(address,
-                                                              value ? toLittleEndian(quint16(States::On)) : toLittleEndian(quint16(States::Off)));
+                                                              value ? toLittleEndian(quint16(States::On)) :
+                                                                  toLittleEndian(quint16(States::Off)));
                               },
                               Qt::QueuedConnection);
 }

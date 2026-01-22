@@ -34,7 +34,6 @@ signals:
     void modeRequested(Mode mode);
 
 private:
-
     Ui::ModeControlForm *ui;
     ModbusClient *m_modbusClient = nullptr;
 };

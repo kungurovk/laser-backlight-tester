@@ -4,6 +4,7 @@
 
 #include <QDebug>
 #include <QtEndian>
+#include <QMap>
 
 ModeControlForm::ModeControlForm(QWidget *parent)
     : QWidget(parent)
@@ -18,29 +19,31 @@ ModeControlForm::ModeControlForm(QWidget *parent)
 
     const auto wireModeButton = [this](QPushButton *button, ModeAddress address) {
         connect(button, &QPushButton::clicked, this, [this, address] {
-            sendState(address, true);
+            QMap<int, bool> states;
+            states[address] = true;  // Set current address to true
             switch (address) {
             case ModeAddress::AutoAddress:
-                sendState(ModeAddress::ManualAddress, false);
+                states[ModeAddress::ManualAddress] = false;
                 break;
             case ModeAddress::ManualAddress:
-                sendState(ModeAddress::AutoAddress, false);
+                states[ModeAddress::AutoAddress] = false;
                 break;
             case ModeAddress::DutyAddress:
-                sendState(ModeAddress::PrepareAddress, false);
-                sendState(ModeAddress::WorkAddress, false);
+                states[ModeAddress::PrepareAddress] = false;
+                states[ModeAddress::WorkAddress] = false;
                 break;
             case ModeAddress::PrepareAddress:
-                sendState(ModeAddress::DutyAddress, false);
-                sendState(ModeAddress::WorkAddress, false);
+                states[ModeAddress::DutyAddress] = false;
+                states[ModeAddress::WorkAddress] = false;
                 break;
             case ModeAddress::WorkAddress:
-                sendState(ModeAddress::DutyAddress, false);
-                sendState(ModeAddress::PrepareAddress, false);
+                states[ModeAddress::DutyAddress] = false;
+                states[ModeAddress::PrepareAddress] = false;
                 break;
             default:
                 break;
             }
+            sendState(states);
         });
     };
 
@@ -88,7 +91,6 @@ void ModeControlForm::handleWriteCompleted(int startAddress, quint16 numberOfEnt
         startAddress <= ModeAddress::WorkAddress)
     {
         // Refresh all values after a successful write
-        qDebug() << "requestAllValues()";
         requestAllValues();
     }
 }
@@ -155,6 +157,37 @@ void ModeControlForm::sendState(int address, bool value)
                                   client->writeSingleRegister(address,
                                                               value ? toLittleEndian(quint16(States::On)) :
                                                                   toLittleEndian(quint16(States::Off)));
+                              },
+                              Qt::QueuedConnection);
+}
+
+void ModeControlForm::sendState(const QMap<int, bool> &states)
+{
+    if (!m_modbusClient || states.isEmpty()) {
+        return;
+    }
+
+    // Find min and max addresses for the range
+    auto addresses = states.keys();
+    std::sort(addresses.begin(), addresses.end());
+    int startAddress = addresses.first();
+    int endAddress = addresses.last();
+
+    // Create vector with values for the entire range
+    QVector<quint16> values(endAddress - startAddress + 1, toLittleEndian(quint16(States::Off)));
+
+    // Set the specified states
+    for (auto it = states.begin(); it != states.end(); ++it) {
+        int index = it.key() - startAddress;
+        values[index] = it.value() ? toLittleEndian(quint16(States::On)) : toLittleEndian(quint16(States::Off));
+    }
+
+    QMetaObject::invokeMethod(m_modbusClient,
+                              [client = m_modbusClient, startAddress, values]() {
+                                  if (!client) {
+                                      return;
+                                  }
+                                  client->writeMultipleRegisters(startAddress, values);
                               },
                               Qt::QueuedConnection);
 }

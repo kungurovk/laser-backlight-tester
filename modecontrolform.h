@@ -2,6 +2,7 @@
 #define MODECONTROLFORM_H
 
 #include <QWidget>
+#include <QMap>
 
 #include "enums.h"
 #include "modbusclient.h"
@@ -26,6 +27,7 @@ private slots:
     void handleReadCompleted(int startAddress, const QVector<quint16> &values);
     void handleWriteCompleted(int startAddress, quint16 numberOfEntries);
     void sendState(int address, bool value);
+    void sendState(const QMap<int, bool> &states);
     void requestAllValues() const;
 
     void on_pushButton_clicked();

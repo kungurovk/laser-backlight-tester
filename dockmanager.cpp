@@ -363,7 +363,8 @@ void DockManager::onConnectionStateChanged(bool connected)
         requestAllValues();
     } else {
         // При разрыве соединения начинаем попытки переподключения
-        startReconnectionAttempts();
+        // startReconnectionAttempts();
+        toggleConnect(false);
     }
 }
 

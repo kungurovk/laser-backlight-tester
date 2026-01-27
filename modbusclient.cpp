@@ -69,6 +69,8 @@ void ModbusClient::setConnectionParameters(const QString &host, quint16 port, in
     m_client->setConnectionParameter(QModbusDevice::NetworkAddressParameter, m_host);
     m_client->setConnectionParameter(QModbusDevice::NetworkPortParameter, m_port);
     m_client->setTimeout(m_timeoutMs);
+    m_client->setNumberOfRetries(1);
+    m_client->setProperty("reconnectDelay", 1000);
 }
 
 bool ModbusClient::connectDevice(const QString &host, quint16 port)

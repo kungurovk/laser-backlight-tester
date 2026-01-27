@@ -81,7 +81,7 @@ private:
 
     QString m_host;
     quint16 m_port = 502;
-    int m_timeoutMs = 1000;
+    int m_timeoutMs = 3000;
 
     QPointer<QModbusTcpClient> m_client;
 

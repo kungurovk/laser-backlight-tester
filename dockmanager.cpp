@@ -99,8 +99,9 @@ void DockManager::setModbusClient(ModbusClient *client)
     if (m_modbusClient) {
         connect(m_modbusClient, &ModbusClient::connectionStateChanged, this, &DockManager::onConnectionStateChanged);
         onConnectionStateChanged(m_modbusClient->isConnected());
+        toggleConnect(false);
     } else {
-        onConnectionStateChanged(false);
+        // onConnectionStateChanged(false);
     }
 }
 
@@ -364,7 +365,6 @@ void DockManager::onConnectionStateChanged(bool connected)
     } else {
         // При разрыве соединения начинаем попытки переподключения
         // startReconnectionAttempts();
-        toggleConnect(false);
     }
 }
 

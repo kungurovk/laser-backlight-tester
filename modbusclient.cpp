@@ -34,6 +34,14 @@ ModbusClient::ModbusClient(QObject *parent)
             return;
         }
         emit errorOccurred(tr("Modbus client error: %1").arg(m_client->errorString()));
+        qDebug() << "errorOccurred";
+        QTimer::singleShot(100, this, [this](){
+#ifdef QT_DEBUG
+            emit connectDevice("127.0.0.1", 502);
+#else
+            emit connectDevice("172.16.5.101", 502);
+#endif
+        });
     });
 
     m_dispatchTimer->setInterval(100);
@@ -75,6 +83,7 @@ void ModbusClient::setConnectionParameters(const QString &host, quint16 port, in
 
 bool ModbusClient::connectDevice(const QString &host, quint16 port)
 {
+    m_client->disconnectDevice();
     setConnectionParameters(host, port);
 
     if (!m_client) {

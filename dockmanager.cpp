@@ -5,6 +5,7 @@
 #include "limitandtargetvaluesform.h"
 #include "generatorsetterform.h"
 #include "modbusclient.h"
+#include "git_version.h"
 
 #include <QDockWidget>
 #include <QMenuBar>
@@ -35,7 +36,17 @@ static QString settingsApp() { return QStringLiteral("Laser Backlight Tester"); 
 DockManager::DockManager(QWidget *parent)
     : QMainWindow{parent}
 {
-
+    // Display git tag
+    m_gitTagLabel = new QLabel(this);
+    m_gitTagLabel->setText(QString("Git: %1").arg(GitVersion::GIT_TAG));
+    m_gitTagLabel->setStyleSheet(QStringLiteral(
+        "QLabel {"
+        "  color: #666;"
+        "  font-size: 10px;"
+        "  padding: 2px 8px;"
+        "}"
+    ));
+     
     // createUi();
     m_requestAllTimer = new QTimer(this);
     m_requestAllTimer->setSingleShot(false);
@@ -177,6 +188,9 @@ void DockManager::createMenusAndToolbars()
     m_windowMenu->addSeparator();
     m_windowMenu->addAction(m_actCloseAll);
 
+    m_versionMenu = menuBar()->addMenu(QString("Git: %1").arg(GitVersion::GIT_TAG));
+    m_versionMenu->setDisabled(true);
+
     m_mainToolbar = addToolBar(tr("Главная"));
     m_mainToolbar->setObjectName(QStringLiteral("MainToolbar"));
     m_buttonConnect = new QPushButton;
@@ -198,6 +212,7 @@ void DockManager::createMenusAndToolbars()
             "}"
             ));
         m_mainToolbar->addWidget(m_connectionStatusLabel);
+        // m_mainToolbar->addWidget(m_gitTagLabel);
 
         // auto *spacer = new QWidget(this);
         // spacer->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Preferred);

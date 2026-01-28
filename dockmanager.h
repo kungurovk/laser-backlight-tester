@@ -72,9 +72,11 @@ private:
     QMenu *m_fileMenu = nullptr;
     QMenu *m_viewMenu = nullptr;
     QMenu *m_windowMenu = nullptr;
+    QMenu *m_versionMenu = nullptr;
     QToolBar *m_mainToolbar = nullptr;
     QPushButton *m_buttonConnect = nullptr;
     QLabel *m_connectionStatusLabel = nullptr;
+    QLabel *m_gitTagLabel = nullptr;
     QAction *m_actAddSensorTable = nullptr;
     QAction *m_actAddBlockTable = nullptr;
     QAction *m_actAddModeControl = nullptr;

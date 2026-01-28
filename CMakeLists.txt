@@ -13,6 +13,23 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets SerialBus)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets SerialBus)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
 
+# Generate git version header
+add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/git_version.h
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/generate_git_version.bat
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/generate_git_version.bat
+    COMMENT "Generating git version header"
+)
+
+# Create a custom target for the version header
+add_custom_target(git_version_target ALL
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/git_version.h
+)
+
+# Include the generated header directory
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
 set(PROJECT_SOURCES
         main.cpp
         dockmanager.cpp
@@ -31,6 +48,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
     )
+    add_dependencies(laser-backlight-tester git_version_target)
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET laser-backlight-tester APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
 #                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
@@ -51,6 +69,7 @@ else()
             textbuttonform.h textbuttonform.cpp textbuttonform.ui
             res.qrc
         )
+        add_dependencies(laser-backlight-tester git_version_target)
     endif()
 endif()
 

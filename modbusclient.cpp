@@ -7,6 +7,8 @@
 #include <QLoggingCategory>
 #include <QVariant>
 
+#include <QtGlobal>
+
 #include <QTimer>
 
 namespace {
@@ -18,23 +20,25 @@ ModbusClient::ModbusClient(QObject *parent)
     , m_client(new QModbusTcpClient(this))
     , m_dispatchTimer(new QTimer(this))
     , m_replyTimeout(new QTimer(this))
+    , m_connectTimeoutTimer(new QTimer(this))
 {
-    connect(m_client, &QModbusTcpClient::stateChanged, this, [this](QModbusDevice::State state) {
-        if (state == QModbusDevice::ConnectedState) {
-            emit connectionStateChanged(true);
-            startDispatchTimerIfNeeded();
-        } else if (state == QModbusDevice::UnconnectedState) {
-            stopDispatching();
-            emit connectionStateChanged(false);
+    m_connectTimeoutTimer->setSingleShot(true);
+    connect(m_connectTimeoutTimer, &QTimer::timeout, this, [this]() {
+        if (!m_client) {
+            return;
+        }
+        if (m_client->state() != QModbusDevice::ConnectingState) {
+            return;
+        }
+
+        handleError(tr("Connect timeout to %1:%2").arg(m_host).arg(m_port));
+        recreateClient();
+        if (!m_host.isEmpty()) {
+            m_client->connectDevice();
         }
     });
 
-    connect(m_client, &QModbusTcpClient::errorOccurred, this, [this](QModbusDevice::Error error) {
-        if (error == QModbusDevice::NoError) {
-            return;
-        }
-        emit errorOccurred(tr("Modbus client error: %1").arg(m_client->errorString()));
-    });
+    recreateClient();
 
     m_dispatchTimer->setInterval(100);
     m_dispatchTimer->setSingleShot(false);
@@ -55,6 +59,54 @@ ModbusClient::ModbusClient(QObject *parent)
 }
 
 ModbusClient::~ModbusClient() = default;
+
+void ModbusClient::setConnectTimeoutMs(int timeoutMs)
+{
+    m_connectTimeoutMs = timeoutMs;
+}
+
+void ModbusClient::recreateClient()
+{
+    if (m_client) {
+        disconnect(m_client, nullptr, this, nullptr);
+        m_client->deleteLater();
+    }
+
+    m_client = new QModbusTcpClient(this);
+
+    m_client->setConnectionParameter(QModbusDevice::NetworkAddressParameter, m_host);
+    m_client->setConnectionParameter(QModbusDevice::NetworkPortParameter, m_port);
+    m_client->setTimeout(m_timeoutMs);
+    m_client->setNumberOfRetries(0);
+
+    connect(m_client, &QModbusTcpClient::stateChanged, this, [this](QModbusDevice::State state) {
+        if (state == QModbusDevice::ConnectedState) {
+            if (m_connectTimeoutTimer) {
+                m_connectTimeoutTimer->stop();
+            }
+            emit connectionStateChanged(true);
+            startDispatchTimerIfNeeded();
+        } else if (state == QModbusDevice::ConnectingState) {
+            if (m_connectTimeoutTimer) {
+                const int t = m_connectTimeoutMs > 0 ? m_connectTimeoutMs : 2000;
+                m_connectTimeoutTimer->start(t);
+            }
+        } else if (state == QModbusDevice::UnconnectedState) {
+            if (m_connectTimeoutTimer) {
+                m_connectTimeoutTimer->stop();
+            }
+            stopDispatching();
+            emit connectionStateChanged(false);
+        }
+    });
+
+    connect(m_client, &QModbusTcpClient::errorOccurred, this, [this](QModbusDevice::Error error) {
+        if (error == QModbusDevice::NoError) {
+            return;
+        }
+        emit errorOccurred(tr("Modbus client error: %1").arg(m_client->errorString()));
+    });
+}
 
 void ModbusClient::setConnectionParameters(const QString &host, quint16 port, int timeoutMs)
 {
@@ -89,6 +141,11 @@ bool ModbusClient::connectDevice(const QString &host, quint16 port)
         return true;
     }
 
+    if (m_client->state() == QModbusDevice::ConnectingState) {
+        recreateClient();
+        setConnectionParameters(host, port, m_timeoutMs);
+    }
+
     if (!m_client->connectDevice()) {
         handleError(tr("Failed to connect to %1:%2").arg(m_host).arg(m_port));
         return false;
@@ -104,7 +161,11 @@ void ModbusClient::disconnectDevice()
         return;
     }
 
-    if (m_client->state() == QModbusDevice::ConnectedState) {
+    if (m_connectTimeoutTimer) {
+        m_connectTimeoutTimer->stop();
+    }
+
+    if (m_client->state() != QModbusDevice::UnconnectedState) {
         m_client->disconnectDevice();
     }
 }

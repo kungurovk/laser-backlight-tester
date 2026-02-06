@@ -735,12 +735,16 @@ void DockManager::startReconnectionAttempts()
         return;
     }
 
+    static const int kReconnectDelaysMs[] = {0, 300, 700, 1500, 3000, 5000, 8000, 12000, 16000, 20000};
+    static const int kReconnectDelaysCount = int(sizeof(kReconnectDelaysMs) / sizeof(kReconnectDelaysMs[0]));
+
+    const int attemptNumber = m_reconnectionAttempts + 1;
+    const int delayIndex = qMin(m_reconnectionAttempts, kReconnectDelaysCount - 1);
+    const int delayMs = kReconnectDelaysMs[delayIndex];
+
     m_reconnectionAttempts++;
 
-    // Экспоненциальная задержка: 1s, 2s, 4s, 8s, 16s
-    int delayMs = 1000 * (1 << (m_reconnectionAttempts - 1));
-
-    qDebug() << "Попытка переподключения" << m_reconnectionAttempts << "из" << MAX_RECONNECTION_ATTEMPTS
+    qDebug() << "Попытка переподключения" << attemptNumber << "из" << MAX_RECONNECTION_ATTEMPTS
              << "через" << delayMs << "мс";
 
     m_reconnectionTimer->start(delayMs);

@@ -34,6 +34,7 @@ public:
     ~ModbusClient() override;
 
     void setConnectionParameters(const QString &host, quint16 port, int timeoutMs = 1000);
+    void setConnectTimeoutMs(int timeoutMs);
 
     bool isConnected() const;
 
@@ -54,6 +55,7 @@ signals:
     void writeCompleted(int startAddress, quint16 numberOfEntries);
 
 private:
+    void recreateClient();
     void handleReplyFinished(QModbusReply *reply, bool isReadOperation);
     void handleError(const QString &context, QModbusReply *reply = nullptr);
 
@@ -91,6 +93,9 @@ private:
     bool m_isDispatching = false;
     QTimer *m_dispatchTimer = nullptr;
     QTimer *m_replyTimeout = nullptr;
+    QTimer *m_connectTimeoutTimer = nullptr;
     QPointer<QModbusReply> m_activeReply;
+
+    int m_connectTimeoutMs = 2000;
 };
 
